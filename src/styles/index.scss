@@ -1,0 +1,79 @@
+@import './font.scss';
+@import './mixins.scss';
+
+.medium-font {
+	font-family: 'PingFang Medium';
+}
+.number {
+	font-family: 'D-DIN';
+}
+.number-bold {
+	font-family: 'D-DIN-Bold';
+}
+.font-bold {
+	font-weight: bold;
+}
+uni-page-body {
+	height: 100%;
+	font-family: 'PingFang SC';
+	color: $title;
+}
+// 非常用字号，如标签；
+.h-5 {
+	font-size: 20rpx;
+	line-height: 30rpx;
+}
+// 常用字号，如辅助信息/注释；
+.h-4 {
+	font-size: 24rpx;
+	line-height: 36rpx;
+}
+// 常用字号，如正文
+.h-3 {
+	font-size: 30rpx;
+	line-height: 42rpx;
+}
+// 常用字号，如常规标题；
+.h-2 {
+	font-size: 32rpx;
+	line-height: 48rpx;
+}
+// 非常用字号，导航
+.h-1 {
+	font-size: 36rpx;
+	line-height: 54rpx;
+}
+// 仅用于数字
+.h-0 {
+	font-size: 48rpx;
+	line-height: 60rpx;
+}
+.flex-1 {
+	flex: 1;
+}
+.flex {
+	display: flex;
+}
+.flex-l {
+	display: flex;
+	align-items: center;
+}
+.flex-c {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.flex-b {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+// 卡片样式
+.card-box {
+	background: #fff;
+	border-radius: 8rpx;
+	box-shadow: 0 6rpx 10rpx 0 rgba(61, 100, 140, 0.04);
+}
+.shadow {
+	box-shadow: 0 6rpx 10rpx 0 rgba(61, 100, 140, 0.04);
+}

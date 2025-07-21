@@ -1,0 +1,205 @@
+{
+  "pages": [
+    {
+      "path": "pages/task/index",
+      "title": "任务列表"
+    },
+    {
+      "path": "pages/describe/index",
+      "title": "说明"
+    },
+    {
+      "path": "pages/index/index",
+      "title": "首页"
+    },
+    {
+      "path": "pages/message/index",
+      "title": "消息列表"
+    },
+    {
+      "path": "pages/my/index",
+      "title": "我的"
+    },
+    {
+      "path": "pages/login/index",
+      "title": "登录"
+    },
+    {
+      "path": "pages/recharge/index",
+      "title": "会员充值"
+    }
+  ],
+  "subPackages": [
+    // other 分包
+    {
+      "root": "pages/sub-page",
+      "name": "subPage",
+      "pages": [
+        // 免费陌生不熟熟悉超熟
+        {
+          "path": "stepTask/list",
+          "title": "超熟模块首页"
+        },
+        {
+          "path": "stepTask/questionnaire",
+          "title": "超熟模块问卷"
+        },
+        {
+          "path": "stepTask/problem",
+          "title": "超熟模块问答页"
+        },
+        {
+          "path": "stepTask/analysis",
+          "title": "超熟模块-有答案"
+        },
+        {
+          "path": "stepTask/round",
+          "title": "超熟模块对话页"
+        },
+        // 线下模块
+        {
+          "path": "offline/list",
+          "title": "线下模块首页"
+        },
+        {
+          "path": "offline/problem",
+          "title": "线下模块问答页"
+        },
+        {
+          "path": "offline/analysis",
+          "title": "线下模块-无答案"
+        },
+        {
+          "path": "offline/scheme",
+          "title": "线下模块-有答案"
+        },
+        // 图文模块
+        {
+          "path": "image-text/index",
+          "title": "图文模块首页"
+        },
+        {
+          "path": "image-text/problem",
+          "title": "图文模块问答页"
+        },
+        {
+          "path": "image-text/analysis",
+          "title": "图文模块-有答案"
+        },
+        // 问诊
+        {
+          "path": "wenzhen/list",
+          "title": "问诊模块首页"
+        },
+        {
+          "path": "wenzhen/questionnaire",
+          "title": "问诊定制问卷"
+        },
+        {
+          "path": "wenzhen/scheme",
+          "title": "问诊-方案定制有答案"
+        },
+        {
+          "path": "wenzhen/analysis",
+          "title": "问诊-方案定制无答案"
+        },
+        {
+          "path": "wenzhen/detail",
+          "title": "问诊-详细方案"
+        },
+        // 定制
+        {
+          "path": "custom/list",
+          "title": "定制模块首页"
+        },
+        {
+          "path": "custom/questionnaire",
+          "title": "定制模块问卷"
+        },
+        {
+          "path": "custom/scheme",
+          "title": "定制模块-方案界面有答案"
+        },
+        {
+          "path": "custom/analysis",
+          "title": "定制模块-方案界面无答案"
+        },
+        {
+          "path": "custom/custom",
+          "title": "定制模块-定制回答"
+        },
+        {
+          "path": "custom/detail",
+          "title": "定制模块-详细方案"
+        },
+        // 其他页面
+        {
+          "path": "task/list",
+          "title": "子任务列表"
+        },
+        {
+          "path": "task/problem",
+          "title": "咨询"
+        },
+        {
+          "path": "task/scheme",
+          "title": "方案"
+        },
+        {
+          "path": "task/analysis",
+          "title": "分析"
+        },
+        {
+          "path": "task/round",
+          "title": "回合"
+        },
+        {
+          "path": "describe/wenhao",
+          "title": "问号解释说明页"
+        }
+      ]
+    }
+  ],
+  "tabBar": {
+    "custom": true,
+    "color": "#1B1B1B",
+    "selectedColor": "#EB4C60",
+    "list": [
+      {
+        "pagePath": "pages/task/index",
+        "text": "任务列表"
+      },
+      {
+        "pagePath": "pages/describe/index",
+        "text": "说明"
+      },
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/message/index",
+        "text": "消息列表"
+      },
+      {
+        "pagePath": "pages/my/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "橙子QA",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8",
+    "navigationStyle": "custom"
+  },
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^uni-(.*)": "@/uni_modules/uni-$1/components/uni-$1/uni-$1.vue",
+      "^md-(.*)": "@/components/md-ui/components/md-$1/md-$1.vue",
+      "^bc-(.*)": "@/components/bc-ui/components/bc-$1/bc-$1.vue"
+    }
+  }
+}

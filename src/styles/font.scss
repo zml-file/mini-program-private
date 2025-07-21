@@ -1,0 +1,32 @@
+@font-face {
+  font-family: 'PingFang SC';
+  src: url('~@/styles/woff/PingFangSCRegular.woff2') format('woff2'),
+      url('~@/styles/woff/PingFangSCRegular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PingFang Medium';
+  src: url('~@/styles/woff/PingFangSCMedium.woff2') format('woff2'),
+      url('~@/styles/woff/PingFangSCMedium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'D-DIN';
+  src: url('~@/styles/woff/D-DIN.woff2') format('woff2'),
+      url('~@/styles/woff/D-DIN.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'D-DIN-Bold';
+  src: url('~@/styles/woff/D-DIN-Bold.woff2') format('woff2'),
+      url('~@/styles/woff/D-DIN-Bold.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}

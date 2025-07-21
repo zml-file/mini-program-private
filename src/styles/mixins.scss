@@ -1,0 +1,64 @@
+/** 字号 **/
+@for $i from 24 through 48 {
+  .fs-#{$i} {
+    font-size: (1rpx * $i);
+    line-height: 1;
+  }
+}
+//指定行数省略号
+@for $i from 1 through 10 {
+  .ellipsis-#{$i} {
+    @if ($i == '1') {
+      overflow: hidden;
+      word-break: keep-all;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    } @else {
+      text-overflow: ellipsis;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: $i;
+    }
+  }
+}
+// margin
+@for $i from 2 through 100 {
+  @if ($i % 2 == 0) {
+    @each $d in right, left, top, bottom {
+      .m-#{$d}-#{$i} {
+        margin-#{$d}: (1rpx * $i);
+      }
+    }
+  }
+}
+// padding
+@for $i from 2 through 100 {
+  @if ($i % 2 == 0) {
+    @each $d in right, left, top, bottom {
+      .p-#{$d}-#{$i} {
+        padding-#{$d}: (1rpx * $i);
+      }
+    }
+  }
+}
+// border-radius
+@each $i in xl, sm, md, lg, xl {
+  .raidus-#{$i} {
+    @if ($i == 'xl') {
+      border-radius: 4rpx;
+    }
+    @if ($i == 'sm') {
+      border-radius: 8rpx;
+    }
+    @if ($i == 'md') {
+      border-radius: 16rpx;
+    }
+    @if ($i == 'lg') {
+      border-radius: 32rpx;
+    }
+    @if ($i == 'xl') {
+      border-radius: 64rpx;
+    }
+  }
+}
