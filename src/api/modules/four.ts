@@ -28,13 +28,15 @@ export const FOUR = {
   addStage: (data: Four.Body) => request<string>('/api/fourModule/addStage', 'GET', data),
   // 获得当前回合积分
   getRoundIntegral: (data: Four.Body) =>
-    request<Four.RoundIntegral.Get.Data>('/api/fourModule/getRoundIntegral', 'GET', data),
+    request<Four.RoundIntegral.Get.Data>('/api/integral/getRoundIntegral', 'GET', data),
   // 增加当前回合积分
   addRoundIntegral: (data: Four.RoundIntegral.Add.Body) =>
-    request<string>('/api/fourModule/addRoundIntegral', 'GET', data),
+    request<string>('/api/integral/addRoundIntegral', 'GET', data),
   timeConfig: (data: Partial<Four.TimeConfig.Body>) =>
-    request<Four.TimeConfig.Data[]>('/api/timeConfig/timeList', 'GET', data),
+    request<Four.TimeConfig.Data[]>('/api/timeConfig/timeList', 'POST', data),
+  saveTempTime: (data: Partial<Four.SaveTempTime.Body>) =>
+    request<Four.SaveTempTime.Data>('/api/timeConfig/saveTempTime', 'POST', data),
   // 复制内容
-  copyContentDetail: (data: Partial<Four.CopyContentDetail.Body>) => request<Four.CopyContentDetail.Data>('/api/fourModule/copyContentDetail', 'GET', data),
+  copyContentDetail: (data: Partial<Four.CopyContentDetail.Body>) => request<Four.CopyContentDetail.Data>('/api/fourModule/copyContentDetail', 'POST', data),
 };
 export default FOUR;

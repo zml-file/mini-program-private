@@ -1,7 +1,10 @@
 import { stageEnum } from '@/utils/data';
 export type StageEnumType = keyof typeof stageEnum;
 
-export type UploadImageBodyType = { filePath: string; formData?: Record<string, any> };
+export type UploadImageBodyType = {
+  filePath: string;
+  formData?: Record<string, any>;
+};
 
 export type QuestionType = {
   1: '单选题';
@@ -262,6 +265,7 @@ export namespace Four {
     export interface Data {
       stepDetailId: number; // 上个复制的内容步骤id
       stepId: number;
+      warehouseType: number; // 0 开始库，1 内容库，2 离开库
     }
   }
 
@@ -335,7 +339,7 @@ export namespace Four {
 
     export interface StatusVo {
       cutDownTime: string; // 回合cd时间
-      id: number;
+      stepDetailId: number;
       sign: string; // 当前回合的标识 A/AZ/D/AD
     }
 
@@ -379,9 +383,20 @@ export namespace Four {
     }
   }
 
+  export namespace SaveTempTime {
+    export interface Body {
+      time: number; // 具体时间 例如，1天，1小时，1分钟。。。
+      intervalTimeType: string; // SECONDS:秒 / MINUTES:分 / HOURS:小时 / DAYS:天
+    }
+
+    export interface Data {
+
+    }
+  }
+
   // 复制内容
   export namespace CopyContentDetail {
-     export interface Body extends Four.Body {
+    export interface Body extends Four.Body {
       moduleCode: ModuleCode;
       stepDetailId: number; // 内容详情的id
       stepId: number; // 步骤id

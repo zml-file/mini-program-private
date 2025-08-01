@@ -104,10 +104,10 @@ const handleJump = async (item: Task.List.Data & Four.GetTaskDetail.Data) => {
       specialStepId: item.specialStepId,
     });
   }
-  if (item.stepType === 'familiar_s4') {
-    // 跳转对方主动找页面
-    uni.redirectTo({ url: '/pages/sub-page/stepTask/round?module=熟悉模块&taskId=' + item.taskId });
-  }
+  // if (item.stepType === 'familiar_s4') {
+  // }
+  // 跳转对方主动找页面
+  uni.redirectTo({ url: '/pages/sub-page/stepTask/round?module=熟悉模块&taskId=' + item.taskId });
   // shuxiModule({
   //   isScoreFlag: 0,
   //   taskId: item.taskId,

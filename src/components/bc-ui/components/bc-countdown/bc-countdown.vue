@@ -2,27 +2,24 @@
   <view :class="['countdown', size === 'default' ? 'm-b-60' : '']">
     <uni-countdown
       :font-size="size === 'default' ? 30 : 16"
-      :show-day="!getCountdown(time)?.days"
-      :show-hour="!getCountdown(time)?.hours"
-      :show-minute="!getCountdown(time)?.minutes"
-      :show-second="!getCountdown(time)?.seconds"
+      :show-day="!!getCountdown(time)?.days"
       :day="getCountdown(time)?.days"
       :hour="getCountdown(time)?.hours"
       :minute="getCountdown(time)?.minutes"
       :second="getCountdown(time)?.seconds"
-      @timeup="() => emit('timeup')"
+      @timeup="timerup"
       color="#000000"
-      :background-color="bgType === 'dark' ? '#fff70e' : '#ffaaaa'" />
-    <view :class="['desc', 'm-top-20', bgType === 'dark' ? 'dark_bg' : '']">
-      <md-icon name="gantanhao" width="24" height="24"></md-icon>
-      <view class="m-left-8">{{ desc }}</view>
-    </view>
+      :background-color="bgType === 'dark' ? '#fff70e' : '#ffaaaa'"
+    />
+    <bc-tip-row :bgType="bgType" v-if="!hideTip">{{ desc }}</bc-tip-row>
   </view>
 </template>
 
 <script setup lang="ts">
 import { getCountdown } from '@/utils/util';
+import { onMounted, ref } from 'vue';
 const emit = defineEmits(['timeup']);
+const isMounted = ref(false);
 
 defineProps({
   size: {
@@ -41,7 +38,21 @@ defineProps({
     type: String,
     default: 'white', // dark
   },
+  hideTip: {
+    type: Boolean,
+    default: false
+  }
 });
+
+onMounted(() => {
+  isMounted.value = true;
+});
+
+const timerup = () => {
+  if (isMounted.value) {
+    emit('timeup');
+  }
+};
 </script>
 
 <style lang="scss" scoped>

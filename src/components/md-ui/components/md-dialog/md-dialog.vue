@@ -1,12 +1,12 @@
 <template>
-  <page-meta :page-style="'overflow:' + (data.show ? 'hidden' : 'visible')"></page-meta>
+  <!-- <page-meta :page-style="'overflow:' + (data.show ? 'hidden' : 'visible')"></page-meta> -->
   <uni-popup ref="popup" @change="change" class="custom-popup">
     <view class="popup-wrapper" :style="{ width: typeof props.width === 'number' ? props.width + 'rpx' : width }">
       <!-- 标题栏 -->
       <view class="title">{{ props.title }}</view>
       <view class="content"><slot /></view>
       <view class="btns flex">
-        <view class="btn confirm" @click="handleOk">{{ okText }}</view>
+        <view v-if="!hideOk" class="btn confirm" @click="handleOk">{{ okText }}</view>
         <view v-if="!hideCancel" class="btn cancel" @click="close">{{ cancelText }}</view>
       </view>
     </view>
@@ -23,6 +23,10 @@ const props = defineProps({
   okText: {
     type: String,
     default: '确定',
+  },
+  hideOk: {
+    type: String,
+    default: false,
   },
   cancelText: {
     type: String,

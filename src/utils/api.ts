@@ -45,7 +45,10 @@ export const getHint = async (
 };
 
 // 保存阶段
-export const savePoint = async (params: Four.SavePoint.Body, cb?: () => any) => {
+export const savePoint = async (
+  params: Four.SavePoint.Body,
+  cb?: () => any
+) => {
   try {
     const res = await api.four.savePoint({ ...params });
     if (res?.data) {
@@ -56,7 +59,10 @@ export const savePoint = async (params: Four.SavePoint.Body, cb?: () => any) => 
 };
 
 // 关闭阶段
-export const closeOverTimeDetailStep = async (params: Four.CloseOverTimeDetailStep.Query, cb?: () => any) => {
+export const closeOverTimeDetailStep = async (
+  params: Four.CloseOverTimeDetailStep.Query,
+  cb?: () => any
+) => {
   try {
     await api.four.closeOverTimeDetailStep(params);
     console.log('关闭详细步骤成功');
@@ -65,7 +71,10 @@ export const closeOverTimeDetailStep = async (params: Four.CloseOverTimeDetailSt
 };
 
 // 更改任务的模块
-export const changeTaskModule = async (params: { moduleCode: string; taskId: string }) => {
+export const changeTaskModule = async (params: {
+  moduleCode: string;
+  taskId: string;
+}) => {
   try {
     await api.task.changeTaskModule({ ...params });
     return true;
@@ -98,7 +107,9 @@ export const getQuestion = (x: string): Promise<string> => {
 };
 
 // 获取当前任务详情
-export const getTaskDetail = async (taskId: number): Promise<Four.GetTaskDetail.Data> => {
+export const getTaskDetail = async (
+  taskId: number
+): Promise<Four.GetTaskDetail.Data> => {
   try {
     const res = await api.four.getTaskDetail({
       taskId,
@@ -131,7 +142,9 @@ const getStep = async (params: Four.GetStep.Body) => {
 };
 
 // 获取【详情内容】
-export const getContentList = async (params: Partial<Four.GetContentDetail.Body>) => {
+export const getContentList = async (
+  params: Partial<Four.GetContentDetail.Body>
+) => {
   try {
     const res = await api.four.getContentDetail({
       ...params,
@@ -143,7 +156,9 @@ export const getContentList = async (params: Partial<Four.GetContentDetail.Body>
 
 // 通过获取指定【内容库】获取【详情内容】
 export const getContentListOfAppoint = async (
-  params: Omit<Four.GetContentDetail.Body, 'preStepDetailId' | 'stepId'> & { warehouseName: string }
+  params: Omit<Four.GetContentDetail.Body, 'preStepDetailId' | 'stepId'> & {
+    warehouseName: string;
+  }
 ) => {
   try {
     const appoint = await getAppointContent({
@@ -153,11 +168,11 @@ export const getContentListOfAppoint = async (
     });
     if (appoint) {
       const data = await getContentList({
-        preStepDetailId: appoint?.stepDetailId || -1,
-        stepId: appoint?.stepId || -1,
+        preStepDetailId: appoint?.stepDetailId ?? 0,
+        stepId: appoint?.stepId ?? 0,
         ...params,
       });
-      return data;
+      return { ...data, stepId: appoint?.stepId };
     }
     return null;
   } catch (error) {}
@@ -165,18 +180,24 @@ export const getContentListOfAppoint = async (
 };
 
 // 通过获取【当前步骤】获取【详情内容】
-export const getContentListOfStep = async (params: Omit<Four.GetContentDetail.Body, 'preStepDetailId' | 'stepId'>) => {
+export const getContentListOfStep = async (
+  params: Omit<Four.GetContentDetail.Body, 'preStepDetailId' | 'stepId'>
+) => {
   try {
     const step = await getStep({
       taskId: params.taskId,
       moduleCode: params.moduleCode,
     });
     const data = await getContentList({
-      preStepDetailId: step?.stepDetailId || -1,
-      stepId: step?.stepId || -1,
+      preStepDetailId: step?.stepDetailId ?? 0,
+      stepId: step?.stepId ?? 0,
       ...params,
     });
-    return data;
+    return {
+      ...data,
+      stepId: step?.stepId,
+      closeContent: step?.warehouseType == 2, // 离开库状态，配合点copy后执行下面的步骤
+    };
   } catch (error) {}
   return null;
 };
@@ -234,8 +255,19 @@ export const timeConfig = async (params: Partial<Four.TimeConfig.Body>) => {
   return null;
 };
 
+// 保存倒计时时间配置
+export const saveTempTime = async (params: Four.SaveTempTime.Body) => {
+  try {
+    const res = await api.four.saveTempTime({ ...params });
+    return res.data;
+  } catch (error) {}
+  return null;
+};
+
 // 复制内容，并返回是否继续复制内容
-export const copyContentDetail = async (params: Partial<Four.CopyContentDetail.Body>) => {
+export const copyContentDetail = async (
+  params: Partial<Four.CopyContentDetail.Body>
+) => {
   try {
     const res = await api.four.copyContentDetail({
       ...params,

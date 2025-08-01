@@ -77,5 +77,6 @@ export const stageEnum = {
   super_familiar_w4: '超熟0阶段，提示板w4',
   super_familiar_w6: '超熟0阶段，提示板w6',
   super_familiar_w8: '超熟1阶段，提示板w8',
-  stage_round_content: '阶段回合内容',
+  stage_round_content: '阶段回合初始化内容',
+  stage_round_end_content: '阶段结束内容结束',
 };

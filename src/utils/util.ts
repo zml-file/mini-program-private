@@ -55,7 +55,9 @@ export const getCountdown = (specificTime: string) => {
 // 判断目标时间跟当前时间做比较，判断是否超时
 export const hasItTimeOut = (targetTime: string, currTime?: string) => {
   let _targetTime = new Date(targetTime).getTime();
-  let _currTime = currTime ? new Date(targetTime).getTime() : new Date().getTime();
+  let _currTime = currTime
+    ? new Date(targetTime).getTime()
+    : new Date().getTime();
   // 如果时间超时，则跳转到有答案页面
   if (_targetTime <= _currTime) {
     return true;
@@ -92,8 +94,15 @@ export const getDataBy2D = (data: any[], index: number) => {
  * @returns
  */
 export const getRandomIntInclusive = (_min: number, _max: number) => {
-  if(_min == _max) return _min;
+  if (_min == _max) return _min;
   const min = Math.ceil(Math.min(_min, _max));
   const max = Math.floor(Math.max(_min, _max));
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
+
+// 生成 [min, max] 之间的随机整数
+export function getRandomInt(min: number, max: number) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
