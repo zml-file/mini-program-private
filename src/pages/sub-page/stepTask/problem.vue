@@ -1,5 +1,5 @@
 <template>
-	<md-page title="王先生的咨询">
+	<md-page title="您咨询">
 		<view class="container">
 			<block v-for="item in data.list" :key="item.id">
 				<bc-qa-item :item="item"></bc-qa-item>

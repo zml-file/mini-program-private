@@ -1,5 +1,5 @@
 <template>
-  <md-page title="王先生的咨询" bgType="dark">
+  <md-page title="您咨询" bgType="dark">
     <div class="container">
       <uni-forms ref="form" :modelValue="data.form" label-width="100">
         <uni-forms-item

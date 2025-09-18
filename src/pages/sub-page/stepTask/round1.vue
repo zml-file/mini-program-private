@@ -1,5 +1,5 @@
 <template>
-  <md-page title="王先生的咨询">
+  <md-page title="您咨询">
     <view class="container">
       <view v-if="data.stepSign" class="search-wrap m-bottom-30">
         <view class="search flex-c m-right-12">
