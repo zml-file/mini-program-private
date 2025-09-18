@@ -10,7 +10,7 @@
 import { reactive } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import api from '@/api';
-import { routePathModule } from '@/utils/data';
+import { routePathModule, taskModule } from '@/utils/data';
 
 const data = reactive({
   routeKey: '',
@@ -31,13 +31,32 @@ const fetchModuleExt = async (moduleCode: string) => {
 
 onLoad(option => {
   let pages = getCurrentPages();
-  let prevPath = pages?.[pages.length - 2]?.route;
+  let prevPage = pages?.[pages.length - 2];
+  let prevPath = prevPage?.route;
+  
   if (prevPath && !data.routeKey) {
     let pathList = prevPath?.split('/');
     let key = pathList[pathList.length - 2];
     data.routeKey = key;
-    console.log('获取上一个页面路由关键词：', key, routePathModule[key]);
-    fetchModuleExt(routePathModule[key]);
+    
+    let moduleCode = '';
+    
+    // 特殊处理stepTask情况，需要从上一页面的参数中获取module参数
+    if (key === 'stepTask') {
+      // 由于无法直接获取上一页面的参数，这里可以通过其他方式处理
+      // 比如通过页面路径、storage等方式传递参数
+      // 暂时使用默认的熟悉模块，实际使用时可以根据业务需求调整
+      moduleCode = taskModule['熟悉模块'];
+    } else {
+      // 其他情况使用原有逻辑
+      moduleCode = routePathModule[key] || '';
+    }
+    
+    console.log('获取上一个页面路由关键词：', key, 'moduleCode:', moduleCode);
+    
+    if (moduleCode) {
+      fetchModuleExt(moduleCode);
+    }
   }
 });
 </script>

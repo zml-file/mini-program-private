@@ -46,6 +46,8 @@ export const routePathModule: Record<string, string> = {
   offline: taskModule['线下模块'],
   wenzhen: taskModule['问诊模块'],
   'image-text': taskModule['图文模块'],
+  task: taskModule['超熟模块'],
+  // stepTask目录包含多个模块（陌生、不熟、熟悉、超熟、免费），通过特殊逻辑处理
 };
 
 // 问题的枚举
