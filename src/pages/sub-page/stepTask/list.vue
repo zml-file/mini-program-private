@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { onLoad } from '@dcloudio/uni-app';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import { reactive, ref, computed } from 'vue';
 // 接口
 import api from '@/api';
@@ -72,6 +72,8 @@ const data = reactive<any>({
   module: '',
   value: '',
   bottom_bg: '',
+  loading: false, // 加载状态
+  isFirstLoad: true, // 是否首次加载
 });
 const popup = ref<any>(null);
 
@@ -97,6 +99,7 @@ const roundDesc = (status: number) => {
 };
 
 const handleOk = () => {
+  if (data.loading) return; // 防止重复点击
   if (!data.value) {
     Toast('请输入任务名称');
     return;
@@ -131,7 +134,15 @@ const handleJump = async (item: Task.List.Data & Four.GetTaskDetail.Data) => {
   if (item.stepType === 'familiar_s2') {
     const _hasItTimeOut = hasItTimeOut(item?.endTime);
     if (!_hasItTimeOut) return;
-    await question3({ taskId: item.taskId, specialStepId: item.specialStepId });
+    await question3({
+      taskId: item.taskId,
+      specialStepId: item.specialStepId,
+      // 当用户选择"否"时，会触发S3提示，确认后需要刷新列表以更新倒计时
+      onNoSelected: () => {
+        console.log('问3选择了"否"，刷新列表');
+        getTaskList();
+      }
+    });
     return; // 该流程会在内部引导跳转
   }
 
@@ -153,6 +164,9 @@ const onSwipeClick = () => {
  */
 // 获取任务列表
 const getTaskList = async (module?: any) => {
+  if (data.loading) return; // 防止重复请求
+  data.loading = true;
+  uni.showLoading({ title: '加载中...', mask: true });
   try {
     const res = await api.task.list({
       moduleCode: module || data.module,
@@ -164,30 +178,57 @@ const getTaskList = async (module?: any) => {
       list.push({ ...item, ...detail });
     }
     data.list = list;
-  } catch (error) {}
+  } catch (error) {
+  } finally {
+    data.loading = false;
+    uni.hideLoading();
+  }
 };
 
 // 创建任务
 const fetchCreateTask = async (params: Pick<Task.Create.Body, 'taskName'>) => {
+  if (data.loading) return; // 防止重复点击
+  data.loading = true;
+  uni.showLoading({ title: '创建中...', mask: true });
   try {
     const res = await api.task.createTask({ ...params, moduleCode: data.module });
+    // 关闭弹窗并清空输入
+    popup.value?.close();
+    handleCancel();
+
     // 只有【熟悉模块】和【超熟模块】才有问卷
     if (['熟悉模块', '超熟模块'].includes(data.title)) {
       uni.navigateTo({
         url: `/pages/sub-page/stepTask/questionnaire?taskId=${res.data?.taskId}&taskName=${params?.taskName}&module=${data.title}`,
       });
+    } else {
+      // 对于不需要问卷的模块，创建成功后立即刷新列表
+      data.loading = false; // 重置loading状态，允许刷新
+      await getTaskList();
     }
-    handleCancel();
-  } catch (error) {}
+  } catch (error) {
+  } finally {
+    data.loading = false;
+    uni.hideLoading();
+  }
 };
 
 onLoad(async (options: any) => {
   const module = options?.module as taskModuleKey;
   data.module = taskModule[module];
   data.title = module;
+  data.isFirstLoad = true;
   await getTaskList(taskModule[module]);
   data.bottom_bg = await convertToBase64('/static/images/page_bottom_bg.png');
+  data.isFirstLoad = false;
+});
 
+onShow(() => {
+  // 页面显示时刷新任务列表（例如从问卷页面返回时）
+  // 但不在首次加载时刷新，避免重复请求
+  if (data.module && !data.isFirstLoad) {
+    getTaskList();
+  }
 });
 </script>
 

@@ -8,14 +8,18 @@ import { hasItTimeOut, Toast } from '@/utils/util';
 import { taskModule } from '@/utils/data';
 
 // 提示S3
-const hint3 = (taskId: number) => {
+const hint3 = (taskId: number, onComplete?: () => void) => {
   getHint(
     {
       hintCode: 'S3',
       moduleCode: 'familiar_module',
       stageNum: 0,
     },
-    () => question2(taskId)
+    () => {
+      question2(taskId);
+      // S3提示确认后，执行完成回调（用于刷新列表等操作）
+      onComplete?.();
+    }
   );
 };
 
@@ -51,15 +55,15 @@ const hint4 = (params: { taskId: number; specialStepId?: number; flag?: boolean 
 };
 
 // 问3
-export const question3 = async (params: { taskId: number; specialStepId?: number }) => {
+export const question3 = async (params: { taskId: number; specialStepId?: number; onNoSelected?: () => void }) => {
   const w3 = await getQuestion('q3');
   console.log('w3:',w3)
   if (w3 === 'y') {
     // 提示S4
     hint4({ ...params });
   } else {
-    // 提示3
-    hint3(params.taskId);
+    // 提示S3，选择"否"后需要刷新列表
+    hint3(params.taskId, params.onNoSelected);
   }
 };
 
@@ -75,6 +79,7 @@ const question2 = async (taskId: number) => {
         stageNum: 0,
       },
       () => {
+        console.log('S2提示确认后，准备调用savePoint');
         savePoint(
           {
             stepNum: 0,
@@ -82,6 +87,7 @@ const question2 = async (taskId: number) => {
             taskId,
           },
           () => {
+            console.log('savePoint回调执行，准备跳转到熟悉列表');
             uni.redirectTo({ url: '/pages/sub-page/stepTask/list?module=熟悉模块' });
           }
         );
@@ -95,10 +101,12 @@ const question2 = async (taskId: number) => {
 
 // 问1
 const question1 = async (isScoreFlag: number, taskId: number) => {
+  console.log('question1 执行，isScoreFlag:', isScoreFlag);
   if (isScoreFlag == 1) {
     // 【isScoreFlag = 1】满足
     // 问1
     const w1 = await getQuestion('q1');
+    console.log('问题1回答:', w1);
     if (w1 === 'y') {
       // 问2
       question2(taskId);
@@ -116,11 +124,14 @@ const question1 = async (isScoreFlag: number, taskId: number) => {
   } else {
     // 问1
     const res = await getQuestion('q1');
+    console.log('问题1回答(isScoreFlag=0):', res);
     if (res === 'y') {
       // 不熟模块
+      console.log('准备转移到不熟模块');
       const bool = await changeTaskModule({ moduleCode: taskModule['不熟模块'], taskId: taskId.toString() });
       bool && uni.redirectTo({ url: '/pages/sub-page/stepTask/list?module=不熟模块' });
     } else {
+      console.log('准备转移到陌生模块');
       await changeTaskModule({ moduleCode: taskModule['陌生模块'], taskId: taskId.toString() });
       // 陌生模块
       uni.redirectTo({ url: '/pages/sub-page/stepTask/list?module=陌生模块' });

@@ -50,6 +50,7 @@ const data = reactive<any>({
   submitList: [],
   tabs: [],
   activeIndex: 0, // 标签页当前选择项的下标
+  loading: false, // 加载状态
 });
 
 const popup = ref<any>(null);
@@ -61,11 +62,13 @@ const handleBack = () => {
 };
 
 const hanldeSubmit = async () => {
+  if (data.loading) return; // 防止重复点击
   modelType.value = 'submit';
   popup.value!.open();
 };
 
 const handleOk = () => {
+  if (data.loading) return; // 防止重复点击
   if (modelType.value === 'submit') {
     let moduleUserQuestionList: any[] = [];
     data.submitList?.forEach((item: { moduleUserQuestionList: any[] }) => {
@@ -85,6 +88,7 @@ const handleOk = () => {
  * 接口相关
  */
 const fetchModuleQuestionList = async () => {
+  uni.showLoading({ title: '加载中...', mask: true });
   try {
     const res = await api.task.moduleQuestionList({
       moduleCode: taskModule[data.prevPageQuery.module as taskModuleKey],
@@ -110,21 +114,46 @@ const fetchModuleQuestionList = async () => {
         })),
       };
     });
-  } catch (error) {}
+  } catch (error) {
+  } finally {
+    uni.hideLoading();
+  }
 };
 
 // 提交问卷
 const submitQuestion = async (params: Task.SubmitQuestion.Body) => {
+  data.loading = true;
+  uni.showLoading({ title: '提交中...', mask: true });
   try {
     const res = await api.four.submitQuestion(params);
+    console.log('问卷提交成功，返回数据:', res);
+    popup.value!.close();
+    uni.hideLoading();
+    data.loading = false;
+
     if (data.prevPageQuery.module === '熟悉模块') {
+      // 熟悉模块：执行特殊流程
+      // shuxiModule 内部会通过弹窗引导用户，并在最后使用 redirectTo 跳转到对应列表
+      // 这个过程会替换当前的问卷页面，所以不需要手动返回
+      console.log('开始执行熟悉模块流程, isScoreFlag:', res.data.isScoreFlag);
       shuxiModule({
         isScoreFlag: res.data.isScoreFlag,
         taskId: data.prevPageQuery?.taskId,
       });
-      popup.value!.close();
+    } else if (data.prevPageQuery.module === '超熟模块') {
+      // 超熟模块：返回超熟列表
+      console.log('超熟模块，返回列表');
+      uni.navigateBack();
+    } else {
+      // 其他模块（不熟、陌生、免费）：返回对应列表
+      console.log('其他模块，返回列表');
+      uni.navigateBack();
     }
-  } catch (error) {}
+  } catch (error) {
+    console.error('问卷提交失败:', error);
+    data.loading = false;
+    uni.hideLoading();
+  }
 };
 
 onLoad(option => {

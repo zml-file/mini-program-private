@@ -51,11 +51,14 @@ export const savePoint = async (
 ) => {
   try {
     const res = await api.four.savePoint({ ...params });
-    if (res?.data) {
-      console.log('保存节点成功');
-      cb?.();
-    }
-  } catch (error) {}
+    // request 成功时会 resolve res.data (整个响应对象)
+    // 所以 res 的结构是 { code: 200, message: '...', data: string }
+    // 只要请求成功（没有抛出异常），就执行回调
+    console.log('保存节点成功', res);
+    cb?.();
+  } catch (error) {
+    console.error('保存节点失败', error);
+  }
 };
 
 // 关闭阶段

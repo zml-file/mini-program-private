@@ -101,7 +101,14 @@ const updateValue = (value: string) => {
     }
   }
   .content {
-    font-size: 24rpx;
+    font-size: 28rpx;
+    line-height: 1.6;
+    width: 100%;
+    text-align: left;
+    padding: 10rpx 0;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
   }
   .btns {
     width: 100%;
@@ -110,17 +117,29 @@ const updateValue = (value: string) => {
     flex-wrap: wrap;
     gap: 14rpx;
     .check-box {
-      width: 100rpx;
-      height: 50rpx;
-      line-height: 50rpx;
+      min-width: 100rpx;
+      max-width: 100%;
+      height: auto;
+      min-height: 50rpx;
+      line-height: 1.5;
+      padding: 12rpx 24rpx;
       text-align: center;
-      font-size: 22rpx;
+      font-size: 24rpx;
       border-radius: 24rpx;
       border: 1rpx solid #222222;
+      box-sizing: border-box;
+      word-wrap: break-word;
+      word-break: break-word;
+      white-space: normal;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
       &.active {
         background: #b0d5df;
         border-color: #b0d5df;
         color: white;
+        font-weight: 500;
       }
     }
   }
