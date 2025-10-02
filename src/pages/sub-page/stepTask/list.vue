@@ -133,7 +133,15 @@ const handleJump = async (item: Task.List.Data & Four.GetTaskDetail.Data) => {
   // familiar_s2（阶段0的问答流程）需要等大CD结束
   if (item.stepType === 'familiar_s2') {
     const _hasItTimeOut = hasItTimeOut(item?.endTime);
-    if (!_hasItTimeOut) return;
+    if (!_hasItTimeOut) {
+      // 倒计时未结束，提示用户等待
+      uni.showToast({
+        title: '倒计时未结束，请耐心等待',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
     await question3({
       taskId: item.taskId,
       specialStepId: item.specialStepId,
@@ -148,6 +156,22 @@ const handleJump = async (item: Task.List.Data & Four.GetTaskDetail.Data) => {
 
   // “对方找倒计时”未结束时禁止点击（taskStatus=65）
   if (item.taskStatus === 65 && item.otherFindEndTime && !hasItTimeOut(item.otherFindEndTime)) {
+    uni.showToast({
+      title: '对方找倒计时未结束，请稍后再试',
+      icon: 'none',
+      duration: 2000
+    });
+    return;
+  }
+
+  // 通用倒计时检查：回合/阶段倒计时（taskStatus=61,62）或Z倒计时（taskStatus=63）
+  if ([61, 62, 63].includes(item.taskStatus) && item.endTime && !hasItTimeOut(item.endTime)) {
+    const statusText = item.taskStatus === 63 ? 'Z倒计时' : '下次聊天开启倒计时';
+    uni.showToast({
+      title: `${statusText}未结束，请耐心等待`,
+      icon: 'none',
+      duration: 2000
+    });
     return;
   }
 

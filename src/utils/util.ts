@@ -35,8 +35,11 @@ export const convertToBase64 = (filePath: string): Promise<string> => {
 export const getCountdown = (specificTime: string) => {
   // 当前时间
   const currentTime = moment();
+  // ✅ 修复：将 "yyyy-MM-dd HH:mm:ss" 格式转换为 "yyyy/MM/dd HH:mm:ss" 格式
+  // iOS 不支持 "yyyy-MM-dd HH:mm:ss" 格式，需要将 "-" 替换为 "/"
+  const formattedTime = specificTime ? specificTime.replace(/-/g, '/') : specificTime;
   // 时间节点
-  const specificMoment = moment(specificTime);
+  const specificMoment = moment(formattedTime);
 
   // 计算时间差
   const duration = moment.duration(specificMoment.diff(currentTime));
@@ -54,9 +57,16 @@ export const getCountdown = (specificTime: string) => {
 
 // 判断目标时间跟当前时间做比较，判断是否超时
 export const hasItTimeOut = (targetTime: string, currTime?: string) => {
-  let _targetTime = new Date(targetTime).getTime();
+  // ✅ 修复：将 "yyyy-MM-dd HH:mm:ss" 格式转换为 "yyyy/MM/dd HH:mm:ss" 格式
+  // iOS 不支持 "yyyy-MM-dd HH:mm:ss" 格式，需要将 "-" 替换为 "/"
+  const formatTime = (time: string) => {
+    if (!time) return time;
+    return time.replace(/-/g, '/');
+  };
+
+  let _targetTime = new Date(formatTime(targetTime)).getTime();
   let _currTime = currTime
-    ? new Date(targetTime).getTime()
+    ? new Date(formatTime(currTime)).getTime()
     : new Date().getTime();
   // 如果时间超时，则跳转到有答案页面
   if (_targetTime <= _currTime) {

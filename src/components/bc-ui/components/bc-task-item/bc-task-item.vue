@@ -22,12 +22,13 @@
               </view>
               <view class="date font-bold" v-if="![64, 90].includes(item.taskStatus)">
                 <!-- :show-day="false" -->
+                <!-- ✅ 修复：对方找倒计时（taskStatus=65）使用 otherFindEndTime，其他使用 endTime -->
                 <uni-countdown
                   :font-size="14"
-                  :day="getCountdown(item.endTime)?.days"
-                  :hour="getCountdown(item.endTime)?.hours"
-                  :minute="getCountdown(item.endTime)?.minutes"
-                  :second="getCountdown(item.endTime)?.seconds"
+                  :day="getCountdown(item.taskStatus === 65 ? item.otherFindEndTime : item.endTime)?.days"
+                  :hour="getCountdown(item.taskStatus === 65 ? item.otherFindEndTime : item.endTime)?.hours"
+                  :minute="getCountdown(item.taskStatus === 65 ? item.otherFindEndTime : item.endTime)?.minutes"
+                  :second="getCountdown(item.taskStatus === 65 ? item.otherFindEndTime : item.endTime)?.seconds"
                   color="#000000" />
               </view>
             </view>
@@ -184,7 +185,7 @@ const fetchDelTask = async () => {
 };
 
 onMounted(() => {
-  fetchDropList();
+  // fetchDropList();
 });
 </script>
 

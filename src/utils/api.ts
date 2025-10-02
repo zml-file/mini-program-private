@@ -191,17 +191,23 @@ export const getContentListOfStep = async (
       taskId: params.taskId,
       moduleCode: params.moduleCode,
     });
+    console.log('getContentListOfStep - getStep返回:', step);
+    // 第一次获取内容时，preStepDetailId 应该传0，而不是 step.stepDetailId
+    // step.stepDetailId 是当前步骤的ID，不是上一次复制的内容ID
     const data = await getContentList({
-      preStepDetailId: step?.stepDetailId ?? 0,
+      preStepDetailId: 0,  // 修复：第一次获取时传0
       stepId: step?.stepId ?? 0,
       ...params,
     });
+    console.log('getContentListOfStep - getContentList返回:', data);
     return {
       ...data,
       stepId: step?.stepId,
       closeContent: step?.warehouseType == 2, // 离开库状态，配合点copy后执行下面的步骤
     };
-  } catch (error) {}
+  } catch (error) {
+    console.error('getContentListOfStep 错误:', error);
+  }
   return null;
 };
 

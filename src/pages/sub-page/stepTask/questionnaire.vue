@@ -63,6 +63,46 @@ const handleBack = () => {
 
 const hanldeSubmit = async () => {
   if (data.loading) return; // 防止重复点击
+
+  // ✅ 校验：检查所有问题是否都已填写
+  let allAnswered = true;
+  let unansweredQuestions: string[] = [];
+
+  data.submitList?.forEach((stage: { moduleUserQuestionList: any[] }, stageIndex: number) => {
+    stage.moduleUserQuestionList?.forEach((question: any, questionIndex: number) => {
+      // 获取对应的问题信息
+      const questionInfo = data.list[stageIndex]?.questionVoList?.[questionIndex];
+
+      if (!questionInfo) return;
+
+      // 检查是否已填写
+      let isAnswered = false;
+
+      if (questionInfo.type === 1) {
+        // 单选题：检查 optionId 是否有值
+        isAnswered = question.optionId !== undefined && question.optionId !== null && question.optionId !== '';
+      } else {
+        // 问答题（类型2/3/4）：检查 userSubmitContent 是否有值
+        isAnswered = question.userSubmitContent && question.userSubmitContent.trim() !== '';
+      }
+
+      if (!isAnswered) {
+        allAnswered = false;
+        unansweredQuestions.push(`${data.tabs[stageIndex]?.label || '阶段' + (stageIndex + 1)} - ${questionInfo.title}`);
+      }
+    });
+  });
+
+  if (!allAnswered) {
+    console.log('未完成的问题:', unansweredQuestions);
+    uni.showToast({
+      title: `请完成所有问题后再提交（还有${unansweredQuestions.length}个问题未填写）`,
+      icon: 'none',
+      duration: 3000
+    });
+    return;
+  }
+
   modelType.value = 'submit';
   popup.value!.open();
 };
