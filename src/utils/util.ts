@@ -35,7 +35,7 @@ export const convertToBase64 = (filePath: string): Promise<string> => {
 export const getCountdown = (specificTime: string) => {
   // 当前时间
   const currentTime = moment();
-  // ✅ 修复：将 "yyyy-MM-dd HH:mm:ss" 格式转换为 "yyyy/MM/dd HH:mm:ss" 格式
+  //  修复：将 "yyyy-MM-dd HH:mm:ss" 格式转换为 "yyyy/MM/dd HH:mm:ss" 格式
   // iOS 不支持 "yyyy-MM-dd HH:mm:ss" 格式，需要将 "-" 替换为 "/"
   const formattedTime = specificTime ? specificTime.replace(/-/g, '/') : specificTime;
   // 时间节点
@@ -57,7 +57,7 @@ export const getCountdown = (specificTime: string) => {
 
 // 判断目标时间跟当前时间做比较，判断是否超时
 export const hasItTimeOut = (targetTime: string, currTime?: string) => {
-  // ✅ 修复：将 "yyyy-MM-dd HH:mm:ss" 格式转换为 "yyyy/MM/dd HH:mm:ss" 格式
+  //  修复：将 "yyyy-MM-dd HH:mm:ss" 格式转换为 "yyyy/MM/dd HH:mm:ss" 格式
   // iOS 不支持 "yyyy-MM-dd HH:mm:ss" 格式，需要将 "-" 替换为 "/"
   const formatTime = (time: string) => {
     if (!time) return time;

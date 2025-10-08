@@ -163,6 +163,7 @@ const handleCopyModal = async (r: Four.GetContentDetail.ContentList & Four.GetCo
     stepDetailId: r.stepDetailId,
     sign: r.sign,
     taskId,
+    source: 'lookfor',
   });
   await addRoundIntegral({ taskId, integralNum: 1 });
 };
@@ -176,6 +177,7 @@ const handleCopy = async (r: Four.GetContentDetail.ContentList & Four.GetContent
     stepDetailId: r.stepDetailId,
     sign: r.sign,
     taskId,
+    source: (data.pageInfo as any)?.closeContent ? 'leave' : 'content',
   });
   // 继续下一个内容
   if (isKeep) {

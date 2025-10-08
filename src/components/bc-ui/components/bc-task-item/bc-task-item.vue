@@ -21,14 +21,13 @@
                 {{ desc }}
               </view>
               <view class="date font-bold" v-if="![64, 90].includes(item.taskStatus)">
-                <!-- :show-day="false" -->
-                <!-- ✅ 修复：对方找倒计时（taskStatus=65）使用 otherFindEndTime，其他使用 endTime -->
+                <!--  使用计算属性 countdownTime，根据实际情况选择时间字段 -->
                 <uni-countdown
                   :font-size="14"
-                  :day="getCountdown(item.taskStatus === 65 ? item.otherFindEndTime : item.endTime)?.days"
-                  :hour="getCountdown(item.taskStatus === 65 ? item.otherFindEndTime : item.endTime)?.hours"
-                  :minute="getCountdown(item.taskStatus === 65 ? item.otherFindEndTime : item.endTime)?.minutes"
-                  :second="getCountdown(item.taskStatus === 65 ? item.otherFindEndTime : item.endTime)?.seconds"
+                  :day="getCountdown(countdownTime)?.days"
+                  :hour="getCountdown(countdownTime)?.hours"
+                  :minute="getCountdown(countdownTime)?.minutes"
+                  :second="getCountdown(countdownTime)?.seconds"
                   color="#000000" />
               </view>
             </view>
@@ -51,11 +50,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref, computed } from 'vue';
 // 接口
 import api from '@/api';
 // 工具
-import { getCountdown } from '@/utils/util';
+import { getCountdown, hasItTimeOut } from '@/utils/util';
 
 const data = reactive<any>({
   continuedTimeValue: null, // 选中的续时项
@@ -107,6 +106,26 @@ const props = defineProps({
 });
 const popup = ref<any>(null);
 const currDialogType = ref<string>('');
+
+//  计算属性：根据实际情况选择倒计时时间
+const countdownTime = computed(() => {
+  const item = props.item;
+  const status = item.taskStatus;
+
+  // 如果是"对方找"状态（65）
+  if (status === 65) {
+    // 检查 otherFindEndTime 是否已过期
+    if (item.otherFindEndTime && hasItTimeOut(item.otherFindEndTime)) {
+      // 已过期，使用 endTime（回合/阶段倒计时）
+      return item.endTime;
+    }
+    // 未过期，使用 otherFindEndTime
+    return item.otherFindEndTime;
+  }
+
+  // 其他状态，使用 endTime
+  return item.endTime;
+});
 
 /**
  * 弹窗处理

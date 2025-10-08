@@ -273,9 +273,9 @@ export const saveTempTime = async (params: Four.SaveTempTime.Body) => {
   return null;
 };
 
-// 复制内容，并返回是否继续复制内容
+// 复制内容，并返回是否继续复制内容（扩展支持 source 字段）
 export const copyContentDetail = async (
-  params: Partial<Four.CopyContentDetail.Body>
+  params: Partial<Four.CopyContentDetail.Body> & { source?: 'lookfor' | 'leave' | 'content' }
 ) => {
   try {
     const res = await api.four.copyContentDetail({

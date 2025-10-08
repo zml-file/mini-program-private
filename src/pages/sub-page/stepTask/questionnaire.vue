@@ -64,7 +64,7 @@ const handleBack = () => {
 const hanldeSubmit = async () => {
   if (data.loading) return; // 防止重复点击
 
-  // ✅ 校验：检查所有问题是否都已填写
+  //  校验：检查所有问题是否都已填写
   let allAnswered = true;
   let unansweredQuestions: string[] = [];
 

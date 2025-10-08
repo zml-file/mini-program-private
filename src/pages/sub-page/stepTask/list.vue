@@ -19,7 +19,7 @@
         <view @click="() => handleJump(item)">
           <bc-task-item
             :item="item"
-            :desc="roundDesc(item.taskStatus)"
+            :desc="roundDesc(item)"
             @swipeClick="onSwipeClick"></bc-task-item>
         </view>
       </block>
@@ -64,7 +64,6 @@ import { taskModule } from '@/utils/data';
 import type { taskModuleKey } from '@/utils/data';
 import { hasItTimeOut, Toast, convertToBase64 } from '@/utils/util';
 import { question3 } from './shuxi/stage0';
-import { getTaskDetail } from '@/utils/api';
 
 const data = reactive<any>({
   title: '',
@@ -87,14 +86,35 @@ const footerConfig = computed(() => {
   return { bg: '/static/images/mianfei.png', label: '创建免费任务' };
 });
 
-const roundDesc = (status: number) => {
-  if ([61, 62].includes(status)) {
-    return '下次聊天开启倒计时';
-  } else if (status === 63) {
-    return 'Z倒计时';
-  } else if (status === 65) {
+const roundDesc = (item: Task.List.Data) => {
+  const status = item.taskStatus;
+
+  //  优先检查"对方找"倒计时是否已结束
+  if (status === 65) {
+    // 如果 otherFindEndTime 已过期，检查是否有其他倒计时
+    if (item.otherFindEndTime && hasItTimeOut(item.otherFindEndTime)) {
+      // "对方找"倒计时已结束，检查是否有回合/阶段倒计时
+      if (item.endTime && !hasItTimeOut(item.endTime)) {
+        // 有未结束的回合/阶段倒计时
+        return '下次聊天开启倒计时';
+      }
+      // 没有其他倒计时，显示进行中
+      return '聊天任务进行中';
+    }
+    // "对方找"倒计时未结束
     return '对方找倒计时';
   }
+
+  //  检查回合/阶段倒计时
+  if ([61, 62].includes(status)) {
+    return '下次聊天开启倒计时';
+  }
+
+  //  检查Z倒计时
+  if (status === 63) {
+    return 'Z倒计时';
+  }
+
   return '聊天任务进行中';
 };
 
@@ -129,7 +149,7 @@ const openCreateDialog = () => {
 };
 
 
-const handleJump = async (item: Task.List.Data & Four.GetTaskDetail.Data) => {
+const handleJump = async (item: Task.List.Data) => {
   // familiar_s2（阶段0的问答流程）需要等大CD结束
   if (item.stepType === 'familiar_s2') {
     const _hasItTimeOut = hasItTimeOut(item?.endTime);
@@ -195,14 +215,14 @@ const getTaskList = async (module?: any) => {
     const res = await api.task.list({
       moduleCode: module || data.module,
     });
-    const list = [];
-    for (let item of res?.data || []) {
-      // 获取任务详情
-      const detail = await getTaskDetail(item.taskId);
-      list.push({ ...item, ...detail });
-    }
-    data.list = list;
+
+    //  优化：后端已返回所有字段，无需再调用 getTaskDetail
+    // 直接使用返回的数据
+    data.list = res?.data || [];
+
+    console.log('任务列表加载成功，共', data.list.length, '个任务');
   } catch (error) {
+    console.error('获取任务列表失败:', error);
   } finally {
     data.loading = false;
     uni.hideLoading();

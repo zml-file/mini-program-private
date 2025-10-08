@@ -46,7 +46,7 @@ const handleJump = () => {
 // 获取任务列表（示例：超熟模块）
 const fetchTaskList = async () => {
   try {
-    const res = await api.task.list({ moduleCode: taskModule['超熟模块'] });
+    const res = await api.task.list({ moduleCode: taskModule['熟悉模块'] });
     data.list = res.data || [];
   } catch (e) {}
 };

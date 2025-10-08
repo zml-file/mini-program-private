@@ -28,16 +28,22 @@ const props = defineProps({
 });
 const emit = defineEmits(['copy']);
 
-// 设置内容
+// 设置内容（支持服务端下发的 segmentIndex 恢复进度）
 const _setContent = (content: string) => {
   if (!content) return '';
   const _content = content?.replace('FF', '');
-  const at = _content?.split('@');
-  const ll = _content?.split('LL');
-  if (at?.length > 1) {
-    return at[0];
-  } else if (ll?.length) {
-    return ll[0];
+  // 服务端可在 statusVo.segmentIndex 记录当前已复制到的段落索引（0基）
+  const segIndex = Number((props?.info as any)?.statusVo?.segmentIndex ?? 0);
+  // 优先按 @ 分段，其次按 LL 分段
+  const partsAt = _content.split('@');
+  if (partsAt.length > 1) {
+    const idx = Math.min(Math.max(segIndex, 0), partsAt.length - 1);
+    return partsAt[idx];
+  }
+  const partsLl = _content.split('LL');
+  if (partsLl.length > 1) {
+    const idx = Math.min(Math.max(segIndex, 0), partsLl.length - 1);
+    return partsLl[idx];
   }
   return content;
 };
@@ -70,7 +76,7 @@ const handleCopy = (item: any) => {
       border: 1rpx solid #0000001a;
     }
 
-    // ✅ 禁用状态样式
+    //  禁用状态样式
     &.disabled {
       opacity: 0.5;
 

@@ -101,13 +101,26 @@ export namespace Task {
   // 任务列表
   namespace List {
     interface Data {
-      endTime: string; // 任务的结束时间
-      moduleCode: ModuleCode; // 模块的code
-      startTime: string;
+      //  基础字段
       taskId: number;
       taskName: string;
+      moduleCode: ModuleCode; // 模块的code
       taskStatus: keyof TaskStatusType;
       amount: number; // 具体的虚拟币
+      startTime: string;
+      endTime: string; // 任务的结束时间
+      functionEndTime: string; // 功能结束时间（后端新增）
+
+      //  任务详情字段（后端已补齐）
+      stepType: StageEnumType; // 步骤类型
+      stageNum: number; // 阶段数
+      roundNum: number; // 回合数
+      stepNum: number; // 步骤数
+      stepId: number; // 步骤ID
+      stepDetailId: number; // 步骤内容ID
+      otherFindEndTime: string; // 对方找结束时间
+      specialStepId: number; // 需要被关闭的步骤ID
+      needManualHandle: number; // 是否需要手动关闭（1：需要，-1：不需要）
     }
   }
 
@@ -246,6 +259,7 @@ export namespace Four {
   }
   export namespace GetTaskDetail {
     export interface Data {
+      taskName: string; // 任务名称
       endTime: string;
       needManualHandle: number; // 是否需要手动调用关闭接口 -- closeOverTimeDetailStep，1：需要手动关闭，-1：不需要
       otherFindEndTime: string; // 对方找结束时间
@@ -301,6 +315,8 @@ export namespace Four {
       stepNum: number; // 步骤数
       stepType: StageEnumType; // 步骤类型
       taskId: number; // 任务id
+      stageNum?: number; //  新增：阶段数（可选）
+      roundNum?: number; //  新增：回合数（可选）
     }
   }
 
