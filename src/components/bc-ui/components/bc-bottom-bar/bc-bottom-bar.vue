@@ -105,25 +105,22 @@ const onBack = () => {
     justify-content: flex-end;
   }
   & > .btn {
+    background: #9AB3FF;
+    color: white;
     min-width: 150rpx;
     padding: 0 12rpx;
     height: 72rpx;
     line-height: 70rpx;
     text-align: center;
     border-radius: 16rpx;
-    border: 1rpx solid #222222;
+    // border: 1rpx solid #222222;
     font-size: 32rpx;
     &.dark {
       border-color: white;
       color: white;
     }
     &.active {
-      background: radial-gradient(100% 12158.24% at 99.42% 0%, #f9753d 0%, #f8a04f 48.44%, #f7b261 100%)
-          /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */,
-        radial-gradient(100% 12158.24% at 99.42% 0%, #f8ad3c 0%, #f0c778 48.44%, #ffd18d 100%)
-          /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */,
-        radial-gradient(100% 12158.24% at 99.42% 0%, #faa580 0%, #fc983c 48.44%, #f08f1d 100%)
-          /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */;
+      background: #7A59ED;
       border: 0;
       color: white;
     }

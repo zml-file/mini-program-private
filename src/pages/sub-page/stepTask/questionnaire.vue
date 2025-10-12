@@ -218,7 +218,7 @@ onLoad(option => {
     padding: 8rpx;
     box-sizing: border-box;
     position: sticky;
-    background: linear-gradient(90deg, #ff9d8d 0%, #ffd4cc 100%);
+    background: #ECF1FF;
     border: 1px;
     border-radius: 24rpx;
   }

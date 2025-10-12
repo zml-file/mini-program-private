@@ -87,7 +87,8 @@ const updateValue = (value: string) => {
   background: white;
   .title {
     font-size: 36rpx;
-    font-weight: 600;
+    // font-weight: 600;
+    color: white;
     width: 100%;
     text-align: center;
     height: 60rpx;
@@ -95,7 +96,7 @@ const updateValue = (value: string) => {
     padding: 0 40rpx;
     box-sizing: border-box;
     border-radius: 10rpx;
-    background: linear-gradient(0deg, #f89494 -24.14%, #fff3f3 125.86%);
+    background: linear-gradient(0deg, #9AB3FF -24.14%, #7A59ED 125.86%);
     &.dark_bg {
       background: linear-gradient(0deg, #f6ed0e -24.14%, #fffef3 125.86%);
     }
@@ -136,8 +137,8 @@ const updateValue = (value: string) => {
       justify-content: center;
       transition: all 0.3s ease;
       &.active {
-        background: #b0d5df;
-        border-color: #b0d5df;
+        background: #7A59ED;
+        border-color: #7A59ED;
         color: white;
         font-weight: 500;
       }

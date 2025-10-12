@@ -7,7 +7,7 @@
       @click="onSwipeClick">
       <view class="list" @click="onClick">
         <view class="left_arrow">
-          <md-icon :name="bgType == 'dark' ? 'left_arrow_grey' : 'left_arrow'" width="80" height="80">
+          <md-icon :name="bgType == 'yellow'?'yellow_left_arrow':(bgType == 'dark' ? 'left_arrow_grey' : 'left_arrow')" width="80" height="80">
             <view class="text">{{ tag }}</view>
           </md-icon>
         </view>

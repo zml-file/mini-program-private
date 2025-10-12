@@ -119,6 +119,7 @@ const handleCopy = (text: string) => {
   margin-top: 30rpx;
   .title {
     margin-top: -40rpx;
+    color: white;
     font-size: 36rpx;
     display: inline-block;
     height: 60rpx;
@@ -127,7 +128,7 @@ const handleCopy = (text: string) => {
     box-sizing: border-box;
     gap: 2px;
     border-radius: 10rpx;
-    background: linear-gradient(159.7deg, #fff8ee 10.76%, #fde3e0 93.75%);
+    background: linear-gradient(180deg, #9AB3FF 0%, #7A59ED 100%);
     box-shadow: 0 0 12rpx 0 #c4ae8680;
   }
   .content {
@@ -140,6 +141,7 @@ const handleCopy = (text: string) => {
       border-radius: 20rpx;
       word-break: break-all;
       padding: 20rpx;
+      border: solid 1px #5600ff;
       box-sizing: border-box;
       position: relative;
       .copy_icon {

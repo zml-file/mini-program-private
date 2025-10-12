@@ -78,44 +78,55 @@ defineExpose({
   width: 520rpx;
   box-sizing: border-box;
   margin: 0 auto;
-  background: url('/static/images/msgbox.png') no-repeat center/100% 100%;
-  border-radius: 0;
+  background: #ffffff;
+  border-radius: 24rpx;
   overflow: hidden;
   position: relative;
+  box-shadow: 0 16rpx 36rpx rgba(0,0,0,0.12);
 
   .title {
     width: 100%;
-    padding: 5rpx 80rpx 12rpx;
+    padding: 22rpx 24rpx;
     box-sizing: border-box;
-    font-weight: 800;
+    font-weight: 700;
     font-size: 28rpx;
     color: #ffffff;
     line-height: 1.2;
-    background: transparent;
+    background: #7b5cff;
+    border-top-left-radius: 24rpx;
+    border-top-right-radius: 24rpx;
   }
   .content {
-    padding: 62rpx 42rpx 140rpx; /* 底部留白，避免被固定按钮遮挡 */
+    padding: 36rpx 42rpx 24rpx;
     box-sizing: border-box;
   }
   .btns {
-    position: absolute;
-    right: 48rpx;
-    bottom: 24rpx;
-    width: 282rpx;
-    height: 64rpx;
-    background: url('/static/images/msgbox_btn.png') no-repeat center/100% 100%;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 20rpx;
+    padding: 0 42rpx 32rpx;
     box-sizing: border-box;
-    color: #fff;
+    position: static;
+    width: 100%;
+    color: #333;
   }
   .btns .btn {
-    flex: 1;
+    min-width: 160rpx;
+    height: 64rpx;
     line-height: 64rpx;
     text-align: center;
-    background: transparent;
+    border-radius: 16rpx;
+    font-size: 28rpx;
+    font-weight: 600;
+  }
+  .btns .confirm {
+    background: #7b5cff;
     color: #fff;
+  }
+  .btns .cancel {
+    background: #f4f4f8;
+    color: #7b5cff;
   }
 }
 

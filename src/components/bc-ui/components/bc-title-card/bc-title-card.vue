@@ -1,5 +1,5 @@
 <template>
-  <view class="list" @click="onClick">
+  <view :class="['list', color ? `theme-${color}` : '']" @click="onClick">
     <view :class="['title', bgType === 'dark' ? 'dark_bg' : '']">{{ item.title }}</view>
     <view class="text-content" v-if="item.status == 1">
       <view class="text-content-mask flex-c" v-if="item.showLevel >= showLevel">请升级至VIP4解锁方案二</view>
@@ -27,6 +27,10 @@ defineProps({
   bgType: {
     type: String,
     default: 'white',
+  },
+  color: {
+    type: String,
+    default: '',
   },
   showLevel: {
     type: Number,
@@ -133,5 +137,21 @@ const onClick = () => {
     font-size: 48rpx;
     font-weight: 600;
   }
+}
+/* 紫色主题，仅变更配色，不改变结构与动画 */
+.theme-purple {
+  border-color: #e6e0ff;
+  box-shadow: 0 8rpx 18rpx rgba(123, 92, 255, 0.12);
+}
+.theme-purple .title {
+  background: linear-gradient(180deg, #8f73ff 0%, #7b5cff 100%);
+  color: #fff;
+  box-shadow: 0 0 12rpx rgba(123, 92, 255, 0.35);
+}
+.theme-purple .content .circle-box {
+  background: rgba(#7b5cff, 0.25);
+}
+.theme-purple .content .circle {
+  background: #7b5cff;
 }
 </style>

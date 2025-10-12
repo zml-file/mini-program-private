@@ -2,8 +2,9 @@
   <md-page :title="data.taskName || '您咨询'">
     <view class="container">
       <view v-if="data.stepSign" class="search-wrap m-bottom-30">
+        <md-icon class="wenhao" name="wenhao" width="48" height="48" @click="handleWenhao"></md-icon>
         <view class="search flex-c m-right-12">
-          <input placeholder="请输入对方的问题" class="m-left-20 input" placeholder-style="color: #FC9382;" />
+          <input placeholder="请输入对方的问题" class="m-left-20 input" placeholder-style="color: #7A59ED;" />
         </view>
         <md-icon name="search_btn" width="76" height="76"></md-icon>
       </view>
@@ -137,6 +138,12 @@ const data = reactive<any>({
   isClosingPopup: false,
 });
 const popup = ref<any>(null);
+
+// 问号说明
+const handleWenhao = () => {
+  uni.navigateTo({ url: '/pages/sub-page/describe/wenhao' });
+};
+
 
 
 // 状态显示：步骤中文名
@@ -1094,8 +1101,11 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
 
+    .wenhao { margin-right: 12rpx; }
+
     .search {
       border-radius: 100rpx;
+      border: solid 1px #7A59ED;
       box-shadow: 0 8rpx 8rpx 0 #00000040;
       background: white;
       height: 72rpx;
@@ -1116,38 +1126,100 @@ onUnmounted(() => {
       width: 300rpx;
       height: 300rpx;
       border-radius: 50%;
-      angle: -180 deg;
-      backdrop-filter: blur(128rpx);
+      position: relative;
       font-size: 160rpx;
       font-weight: 600;
 
       &.status_z {
-        background: #f7df71;
-        box-shadow: 3.2rpx 12.8rpx 12.8rpx 0 #ffd206 inset;
-        box-shadow: -3.2rpx -12.8rpx 12.8rpx 0 #ffd3070f inset;
-        box-shadow: 25.6rpx 115.2rpx 166.4rpx 0 #fccf0324;
-        box-shadow: 0 3.2rpx 6.4rpx 0 #fcd0080a inset;
+        position: relative;
+        background: #f7df71; /* 黄色主体 */
+        color: #111;
+        &::before { /* 外圈黑边 + 右下缺口 */
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          background: conic-gradient(#000 0 120deg, transparent 120deg 160deg, #000 160deg 360deg);
+          -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 12rpx), #000 0);
+        }
+        &::after { /* 左上高光 */
+          content: '';
+          position: absolute;
+          width: 56%;
+          height: 56%;
+          top: 16%;
+          left: 14%;
+          border-radius: 50%;
+          background: radial-gradient(circle at 25% 25%, rgba(255,255,255,.95) 0 18%, rgba(255,255,255,.35) 28%, rgba(255,255,255,0) 36%);
+          pointer-events: none;
+        }
       }
 
       &.status_d {
-        background: #a0bf52;
-        box-shadow: 3.2rpx 12.8rpx 12.8rpx 0 #b0f20b inset;
-        box-shadow: -3.2rpx -12.8rpx 12.8rpx 0 #b4f1190f inset;
-        box-shadow: 25.6rpx 115.2rpx 166.4rpx 0 #aced0a24;
-        box-shadow: 0 3.2rpx 6.4rpx 0 #b6fc080a inset;
+        position: relative;
+        background: #9BE6C0; /* 绿色主体 */
+        color: #111;
+        font-size: 160rpx;
+        &::before { /* 完整黑色外圈 */
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          background: conic-gradient(#000 0 120deg, transparent 120deg 160deg, #000 160deg 360deg);
+          -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 12rpx), #000 0);
+        }
+        &::after { /* 左上高光 */
+          content: '';
+          position: absolute;
+          width: 56%;
+          height: 56%;
+          top: 16%;
+          left: 14%;
+          border-radius: 50%;
+          background: radial-gradient(circle at 25% 25%, rgba(255,255,255,.95) 0 18%, rgba(255,255,255,.35) 28%, rgba(255,255,255,0) 36%);
+          pointer-events: none;
+        }
       }
 
       &.status_lookfor {
-        background: #eecace;
-        box-shadow: 3.2rpx 12.8rpx 12.8rpx 0 #eb4c60 inset;
-        box-shadow: -3.2rpx -12.8rpx 12.8rpx 0 #ff11110f inset;
-        box-shadow: 25.6rpx 115.2rpx 166.4rpx 0 #f42e1324;
-        box-shadow: 0 3.2rpx 6.4rpx 0 #f087870a inset;
+        position: relative;
+        background: #f7b299; // 
         font-size: 48rpx;
+        color: #111;
+        border-radius: 50%;
+        // 
+
+        // : 
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          background: conic-gradient(#000 0 120deg, transparent 120deg 160deg, #000 160deg 360deg);
+          -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 12rpx), #000 0);
+          mask: radial-gradient(farthest-side, transparent calc(100% - 12rpx), #000 0);
+          pointer-events: none;
+        }
+
+        // 
+        &::after {
+          content: '';
+          position: absolute;
+          width: 56%;
+          height: 56%;
+          top: 14%;
+          left: 12%;
+          border-radius: 50%;
+          background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.95) 0 18%, rgba(255, 255, 255, 0.35) 28%, rgba(255, 255, 255, 0) 36%);
+          transform: rotate(-20deg);
+          pointer-events: none;
+        }
 
         &.disabeld {
-          background: #888888;
-          color: white;
+          background: #999999;
+          color: #ffffff;
+          filter: none;
+          opacity: 1;
         }
       }
     }

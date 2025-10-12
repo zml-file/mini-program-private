@@ -84,7 +84,7 @@ const data = reactive({});
 		height: 72rpx;
 		line-height: 72rpx;
 		border-radius: 16rpx;
-		background: #eb4c60;
+		background: #7A59ED;
 		color: white;
 		weight: 600;
 		text-align: center;

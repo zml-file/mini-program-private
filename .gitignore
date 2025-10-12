@@ -21,3 +21,4 @@ dist
 *.sln
 *.sw?
 *.md
+/.codebuddy

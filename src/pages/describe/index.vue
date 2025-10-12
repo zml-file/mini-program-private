@@ -3,8 +3,8 @@
     <view class="container">
       <view class="list" v-for="item in data.list" :key="item.id">
         <view class="title fs-28 m-bottom-20 font-bold">{{ item.explainTitle }}</view>
-        <view class="content m-bottom-20">
-          {{ item.explainContent }}
+        <view class="content m-bottom-20" v-html="item.explainContent ">
+
         </view>
         <view class="date">{{ item.extInfo }}</view>
       </view>

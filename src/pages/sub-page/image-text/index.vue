@@ -1,9 +1,8 @@
 <template>
   <md-page title="图文" :subHead="40">
     <template #head>
-      <view class="flex-l" style="justify-content: flex-end">
-        <view class="flex flex-b p-right-30" style="width: calc(50% + 10rpx)">
-          <md-icon type="bg" name="image_text_icon" width="60" height="60"></md-icon>
+      <view>
+        <view class="head-actions">
           <bc-tequan />
         </view>
       </view>
@@ -24,9 +23,17 @@
           disabled
           :item="{ ...item, title: item.title }"></bc-img-text-item>
       </block>
-      <view class="bottom-btn">
-        <view class="btn" @click="handleClick">开启图文权限</view>
+    <template #footer>
+      <view class="mf-footer">
+        <view class="mf-btn" @click="handleClick">
+          <image class="mf-bg" src="@/static/images/xianxia.png" mode="widthFix" />
+          <view class="mf-text">
+            <text class="mf-plus">＋</text>
+            <text class="mf-label">开启图文权限</text>
+          </view>
+        </view>
       </view>
+    </template>
     </view>
     <!-- 创建弹窗 -->
     <md-dialog 
@@ -174,38 +181,99 @@ onShow(() => {
 .container {
   padding: 30rpx;
   padding-bottom: calc($safe-bottom + 120rpx);
-  .bottom-btn {
-    width: 100%;
-    padding: 20rpx;
-    box-sizing: border-box;
-    position: fixed;
-    bottom: $safe-bottom;
-    left: 0;
-    // background: white;
-    box-shadow: 0 0 20rpx 0 #ebebeb80;
-    z-index: 98;
-    gap: 20rpx;
-    display: flex;
-    justify-content: space-between;
-    & > .btn {
-      width: 100%;
-      height: 72rpx;
-      line-height: 70rpx;
-      text-align: center;
-      border-radius: 16rpx;
-      font-size: 32rpx;
-      background: radial-gradient(100% 12158.24% at 99.42% 0%, #f9753d 0%, #f8a04f 48.44%, #f7b261 100%)
-          /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */,
-        radial-gradient(100% 12158.24% at 99.42% 0%, #f8ad3c 0%, #f0c778 48.44%, #ffd18d 100%)
-          /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */,
-        radial-gradient(100% 12158.24% at 99.42% 0%, #faa580 0%, #fc983c 48.44%, #f08f1d 100%)
-          /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */;
-      color: white;
-    }
-  }
 }
+
+/* 底部固定大按钮（与 offline/list 保持一致风格） */
+.mf-footer {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  padding: 16rpx 30rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16rpx);
+  box-sizing: border-box;
+  z-index: 99;
+}
+.mf-btn { width: 100%; position: relative; }
+.mf-bg { width: 100%; display: block; }
+.mf-text {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  // transform: translateY(20rpx);
+  text-align: center;
+}
+.mf-plus { color: #fff; font-size: 40rpx; font-weight: 700; margin-right: 12rpx; line-height: 1; }
+.mf-label { color: #fff; font-size: 32rpx; font-weight: 600; line-height: 1; white-space: nowrap; }
 
 .pupup-content {
   padding: 20rpx;
 }
+/* 统一卡片视觉，匹配参考图 */
+:deep(.bc-img-text-item),
+:deep(.bc-img-text-item .card) {
+  position: relative;
+  background: #ffffff;
+  border: 1rpx solid #e7e7f7; /* 边框颜色 */
+  border-radius: 16rpx;       /* 圆角 */
+  box-shadow: 0 8rpx 18rpx rgba(123, 92, 255, 0.08); /* 柔和阴影 */
+  padding: 24rpx 24rpx 28rpx; /* 内边距 */
+  margin: 22rpx 0;            /* 外边距 */
+}
+
+/* 标题胶囊（居中紫色条） */
+:deep(.bc-img-text-item .title),
+:deep(.bc-img-text-item .card .title) {
+  position: absolute;
+  left: 50%;
+  top: -30rpx;
+  transform: translateX(-50%);
+  padding: 10rpx 28rpx;
+  border-radius: 16rpx;
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 600;
+  background: linear-gradient(180deg, #9AB3FF 0%, #7A59ED 100%);
+  box-shadow: 0 8rpx 18rpx rgba(123, 92, 255, 0.28);
+  white-space: nowrap;
+}
+
+/* 右上角复制按钮（仅样式，不改模板逻辑） */
+:deep(.bc-img-text-item)::after {
+  content: '';
+  position: absolute;
+  right: 16rpx;
+  top: 16rpx;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: #efeaff;
+  box-shadow: 0 6rpx 14rpx rgba(123,92,255,0.15);
+  background-image: url('@/static/icons/copy_icon.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 28rpx 28rpx;
+  opacity: 0.9;
+}
+:deep(.bc-img-text-item:active)::after { opacity: 0.6; }
+
+/* 文本内容配色与间距 */
+:deep(.bc-img-text-item .content),
+:deep(.bc-img-text-item .card .content) {
+  color: #333;
+  font-size: 26rpx;
+  line-height: 1.7;
+  margin-top: 16rpx;
+}
+
+/* 图片区域样式 */
+:deep(.bc-img-text-item .imgs),
+:deep(.bc-img-text-item .card .imgs) {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+:deep(.bc-img-text-item .imgs image),
+:deep(.bc-img-text-item .card .imgs image) {
+  border-radius: 12rpx;
+  box-shadow: 0 6rpx 12rpx rgba(0,0,0,0.08);
+}
+.head-actions { display: flex; justify-content: flex-end; padding: 0 30rpx; }
 </style>

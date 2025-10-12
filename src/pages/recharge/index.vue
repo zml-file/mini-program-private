@@ -194,7 +194,7 @@ onShow(() => {
       border-radius: 16rpx;
       box-shadow: 0 8rpx 8rpx 0 #00000040;
       &.active {
-        background: $warn;
+        background: #7A59ED;
         color: white;
       }
       .price {

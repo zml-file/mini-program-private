@@ -1,6 +1,6 @@
 <template>
   <view
-    :class="['countdown', size === 'default' ? 'm-b-60' : '']"
+    :class="['countdown', size === 'default' ? 'big m-b-60' : 'small']"
     :style="{ 'align-items': alignStyle == 'left' ? 'start' : alignStyle == 'right' ? 'end' : 'center' }">
     <uni-countdown
       ref="countdownRef"
@@ -12,7 +12,7 @@
       :second="!time ? second : getCountdown(time)?.seconds"
       @timeup="timerup"
       color="#000000"
-      :background-color="bgType === 'dark' ? '#fff70e' : '#ffaaaa'" />
+      :background-color="bgType === 'dark' ? '#fff70e' : '#EAE4FF'" />
     <bc-tip-row :bgType="bgType" v-if="!hideTip">{{ desc }}</bc-tip-row>
   </view>
 </template>
@@ -77,6 +77,24 @@ const timerup = () => {
   align-items: center;
   flex-direction: column;
   // margin-bottom: 60rpx;
+
+  &.big {
+    // 大倒计时：方块数字 + 冒号（完全按视觉）
+    ::v-deep(.uni-countdown__number) {
+      background-color: #EEE8FF !important; /* 淡紫 */
+      color: #000 !important;
+      border-radius: 8rpx !important;
+      font-weight: 900;
+      margin: 0 8rpx;
+      min-width: 56rpx;
+      text-shadow: none;
+    }
+    /* 第一个数字块（天）更深紫，不显示“天”字 */
+    ::v-deep(.uni-countdown__number:first-child){ background-color:#7A59FF !important; color:#fff !important; }
+    ::v-deep(.uni-countdown__splitor:first-of-type){ display:none !important; }
+    ::v-deep(.uni-countdown__splitor){ color:#000 !important; font-weight:900; margin: 0 8rpx; }
+  }
+
   .desc {
     display: flex;
     align-items: center;

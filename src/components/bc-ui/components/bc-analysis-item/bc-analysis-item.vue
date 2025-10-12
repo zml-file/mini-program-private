@@ -101,7 +101,7 @@ defineProps({
     padding: 0 40rpx;
     box-sizing: border-box;
     border-radius: 10rpx;
-    background: linear-gradient(0deg, #f89494 -24.14%, #fff3f3 125.86%);
+    background: linear-gradient(0deg, #9AB3FF -24.14%, #7A59ED 125.86%);
     &.dark_bg {
       background: linear-gradient(355.37deg, #eafb27 3.73%, #fef8f4 109.09%);
     }

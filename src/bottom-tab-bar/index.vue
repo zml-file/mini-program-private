@@ -28,7 +28,7 @@ const props = defineProps({
 const data = reactive({
   selected: 0,
   color: '#1B1B1B',
-  selectedColor: '#EB4C60',
+  selectedColor: '#7A59ED',
   list: [
     {
       pagePath: '/pages/task/index',
