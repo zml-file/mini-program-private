@@ -364,6 +364,67 @@ const loadTaskData = () => {
   } else if (task.stageIndex === 2 || task.stageIndex === 3 || task.stageIndex === 4) {
     // 第二、三、四阶段：调用_round加载内容
     console.log('[loadTaskData] 第', task.stageIndex, '阶段，调用_round加载内容');
+
+    // 【修复】检查阶段数据是否初始化，如果没有则自动初始化
+    if (task.stageIndex === 2 && !task.stage2) {
+      console.log('[loadTaskData] stage2数据未初始化，自动调用enterStage2');
+      const result = enterStage2(data.taskId);
+      if (result.ok) {
+        const updatedTask = getTask(data.taskId);
+        if (updatedTask) {
+          task = updatedTask;
+          console.log('[loadTaskData] stage2初始化成功');
+        }
+      } else {
+        uni.showToast({
+          title: result.reason || '初始化失败',
+          icon: 'error'
+        });
+        setTimeout(() => {
+          uni.navigateBack();
+        }, 2000);
+        return;
+      }
+    } else if (task.stageIndex === 3 && !task.stage3) {
+      console.log('[loadTaskData] stage3数据未初始化，自动调用enterStage3');
+      const result = enterStage3(data.taskId);
+      if (result.ok) {
+        const updatedTask = getTask(data.taskId);
+        if (updatedTask) {
+          task = updatedTask;
+          console.log('[loadTaskData] stage3初始化成功');
+        }
+      } else {
+        uni.showToast({
+          title: result.reason || '初始化失败',
+          icon: 'error'
+        });
+        setTimeout(() => {
+          uni.navigateBack();
+        }, 2000);
+        return;
+      }
+    } else if (task.stageIndex === 4 && !task.stage4) {
+      console.log('[loadTaskData] stage4数据未初始化，自动调用enterStage4');
+      const result = enterStage4(data.taskId);
+      if (result.ok) {
+        const updatedTask = getTask(data.taskId);
+        if (updatedTask) {
+          task = updatedTask;
+          console.log('[loadTaskData] stage4初始化成功');
+        }
+      } else {
+        uni.showToast({
+          title: result.reason || '初始化失败',
+          icon: 'error'
+        });
+        setTimeout(() => {
+          uni.navigateBack();
+        }, 2000);
+        return;
+      }
+    }
+
     data.detail = {
       stageNum: task.stageIndex,
       roundNum: task.roundIndex || 0,
@@ -2491,6 +2552,8 @@ const _round = async (r?: { taskId?: number }) => {
       // 如果是 stage_round_content，说明需要获取内容（开库→内容库→离库）
       if (stepType === 'stage_round_content') {
         console.log('第2阶段第一回合，stepType=stage_round_content，获取内容');
+        data.stepSign = ''; // 清除之前的状态标记
+        data.currentStep = 'normal';
         await getListInfo();
       }
       // 如果是 CD 状态，先尝试获取内容，如果没有内容再显示"对方找"按钮
@@ -2504,11 +2567,15 @@ const _round = async (r?: { taskId?: number }) => {
           data.stepSign = 'lookfor';
         } else {
           console.log('第2阶段第一回合，有内容，显示内容列表');
+          data.stepSign = '';
+          data.currentStep = 'normal';
         }
       }
       // 其他情况，尝试获取内容
       else {
         console.log('第2阶段第一回合，未知stepType，尝试获取内容');
+        data.stepSign = '';
+        data.currentStep = 'normal';
         await getListInfo();
       }
     }
@@ -2520,11 +2587,18 @@ const _round = async (r?: { taskId?: number }) => {
         const hasContent = await getListInfo();
         if (!hasContent) {
           data.stepSign = 'lookfor';
+        } else {
+          data.stepSign = '';
+          data.currentStep = 'normal';
         }
       } else if (stepType === 'stage_round_content') {
+        data.stepSign = '';
+        data.currentStep = 'normal';
         await getListInfo();
       } else {
         console.log('第2阶段第', roundNum, '回合，未知stepType，尝试获取内容');
+        data.stepSign = '';
+        data.currentStep = 'normal';
         await getListInfo();
       }
     }
@@ -2546,12 +2620,17 @@ const _round = async (r?: { taskId?: number }) => {
     if (['familiar_3_cd'].includes(stepType)) {
       // CD 阶段，显示"对方找"按钮
       data.stepSign = 'lookfor';
+      data.currentStep = 'stage_cd';
     } else if (stepType === 'stage_round_content') {
       // 回合内容阶段，获取列表信息
+      data.stepSign = ''; // 清除之前的状态标记
+      data.currentStep = 'normal';
       await getListInfo();
     } else {
       // 默认处理：尝试获取列表信息
       console.log('第3阶段未知的 stepType，尝试获取列表信息:', stepType);
+      data.stepSign = '';
+      data.currentStep = 'normal';
       await getListInfo();
     }
   }
