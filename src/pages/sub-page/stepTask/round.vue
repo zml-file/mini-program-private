@@ -368,12 +368,19 @@ const loadTaskData = () => {
     // 【修复】检查阶段数据是否初始化，如果没有则自动初始化
     if (task.stageIndex === 2 && !task.stage2) {
       console.log('[loadTaskData] stage2数据未初始化，自动调用enterStage2');
+      // 【修复】保存原来的回合数和得分，避免被重置
+      const savedRoundIndex = task.roundIndex; // 保存当前回合数
+      const savedStageScore = task.stageScore; // 保存当前得分
       const result = enterStage2(data.taskId);
       if (result.ok) {
+        // 重新获取任务并恢复回合数和得分
         const updatedTask = getTask(data.taskId);
         if (updatedTask) {
+          updatedTask.roundIndex = savedRoundIndex;
+          updatedTask.stageScore = savedStageScore;
+          uni.setStorageSync(`fm:task:${data.taskId}`, updatedTask);
           task = updatedTask;
-          console.log('[loadTaskData] stage2初始化成功');
+          console.log('[loadTaskData] stage2初始化成功，已恢复回合数:', savedRoundIndex, '和得分:', savedStageScore);
         }
       } else {
         uni.showToast({
@@ -387,12 +394,19 @@ const loadTaskData = () => {
       }
     } else if (task.stageIndex === 3 && !task.stage3) {
       console.log('[loadTaskData] stage3数据未初始化，自动调用enterStage3');
+      // 【修复】保存原来的回合数和得分，避免被重置
+      const savedRoundIndex = task.roundIndex; // 保存当前回合数
+      const savedStageScore = task.stageScore; // 保存当前得分
       const result = enterStage3(data.taskId);
       if (result.ok) {
+        // 重新获取任务并恢复回合数和得分
         const updatedTask = getTask(data.taskId);
         if (updatedTask) {
+          updatedTask.roundIndex = savedRoundIndex;
+          updatedTask.stageScore = savedStageScore;
+          uni.setStorageSync(`fm:task:${data.taskId}`, updatedTask);
           task = updatedTask;
-          console.log('[loadTaskData] stage3初始化成功');
+          console.log('[loadTaskData] stage3初始化成功，已恢复回合数:', savedRoundIndex, '和得分:', savedStageScore);
         }
       } else {
         uni.showToast({
@@ -406,12 +420,19 @@ const loadTaskData = () => {
       }
     } else if (task.stageIndex === 4 && !task.stage4) {
       console.log('[loadTaskData] stage4数据未初始化，自动调用enterStage4');
+      // 【修复】保存原来的回合数和得分，避免被重置
+      const savedRoundIndex = task.roundIndex; // 保存当前回合数
+      const savedStageScore = task.stageScore; // 保存当前得分
       const result = enterStage4(data.taskId);
       if (result.ok) {
+        // 重新获取任务并恢复回合数和得分
         const updatedTask = getTask(data.taskId);
         if (updatedTask) {
+          updatedTask.roundIndex = savedRoundIndex;
+          updatedTask.stageScore = savedStageScore;
+          uni.setStorageSync(`fm:task:${data.taskId}`, updatedTask);
           task = updatedTask;
-          console.log('[loadTaskData] stage4初始化成功');
+          console.log('[loadTaskData] stage4初始化成功，已恢复回合数:', savedRoundIndex, '和得分:', savedStageScore);
         }
       } else {
         uni.showToast({
