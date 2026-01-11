@@ -456,9 +456,29 @@ function initDefaults() {
       questionnaire: {
         thresholdX: 10,
         questions: [
-          { id: "q1", title: "有对方线上可交流方式吗？", options: [{ id: "A", text: "是", score: 0 }, { id: "B", text: "否", score: 0 }] },
-          { id: "q2", title: "愿意让对方20天见不到您并按指引操作？", options: [{ id: "A", text: "是", score: 4 }, { id: "B", text: "否", score: 0 }] },
-          { id: "q3", title: "确认完成第一阶段前不主动联系？", options: [{ id: "A", text: "是", score: 6 }, { id: "B", text: "否", score: 0 }] },
+          { id: "q1", title: "有对方线上可交流方式吗?", options: [{ id: "A", text: "是", score: 0 }, { id: "B", text: "否", score: 0 }] },
+          {
+            id: "q2",
+            title: "愿意让对方20天见不到您并按指引操作？",
+            options: [
+              { id: "A", text: "是", score: 4 },
+              { id: "B", text: "否", score: 0 },
+              { id: "C", text: "C", score: 5 },
+              { id: "D", text: "D", score: 7 },
+              { id: "E", text: "E", score: 4 }
+            ]
+          },
+          {
+            id: "q3",
+            title: "确认完成第一阶段前不主动联系？",
+            options: [
+              { id: "A", text: "是", score: 6 },
+              { id: "B", text: "否", score: 0 },
+              { id: "C", text: "C", score: 6 },
+              { id: "D", text: "D", score: 10 },
+              { id: "E", text: "E", score: 10 }
+            ]
+          },
           { id: "q4", title: "问题四（不计分）", options: [{ id: "A", text: "选项A", score: 0 }, { id: "B", text: "选项B", score: 0 }] },
           { id: "q5", title: "问题五（不计分）", options: [{ id: "A", text: "选项A", score: 0 }, { id: "B", text: "选项B", score: 0 }] },
         ],
@@ -950,19 +970,21 @@ export function submitQuestionnaire(taskId: string): { routed: RoutedModule; nex
   const X = libs.questionnaire.thresholdX;
   const score = t.questionnaire.totalScore;
 
-  let routed: RoutedModule = "familiar";
-  if (score < X) {
-    // 按文档：问1之后“是” -> 不熟模块；“否” -> 陌生模块（此处仅路由标记）
-    routed = "familiar"; // 保持在熟悉模块，仅做标记，前端可根据askFlow决定跳转其他模块
-  }
-
-  // 进入问1流程
+  // 更新任务状态
   t.stageIndex = 0;
   t.stepIndex = 0;
   t.lastActionAt = Date.now();
   set(`fm:task:${taskId}`, t);
 
-  return { routed, next: "问1" };
+  // 根据得分判断路由
+  if (score >= X) {
+    // 得分达到阈值(10分),可以进入第一阶段
+    return { routed: "familiar", next: "第一阶段" };
+  } else {
+    // 得分不足,进入问1流程
+    // 按文档：问1之后"是" -> 不熟模块；"否" -> 陌生模块
+    return { routed: "familiar", next: "问1" };
+  }
 }
 
 // Idle handling
