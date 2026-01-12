@@ -115,7 +115,7 @@
       </view>
 
       <!--  内容列表，根据倒计时状态禁用复制按钮 -->
-      <bc-copy-list :info="data.pageInfo || {}" :disabled="!data.canCopyLookfor" @copy="handleCopy" />
+      <bc-copy-list :info="data.pageInfo || {}" :disabled="!data.canCopyLookfor" @copy="handleCopyInPopup" />
     </md-dialog>
   </md-page>
 </template>
@@ -1404,6 +1404,23 @@ const handleCopy = (item: any) => {
       }
     }
   });
+};
+
+// 处理对方找弹窗中的复制（包装函数）
+const handleCopyInPopup = (item: any) => {
+  console.log('[round] 对方找弹窗中点击复制');
+
+  // 调用原来的 handleCopy 函数
+  handleCopy(item);
+
+  // 无论复制后的逻辑如何，都关闭弹窗
+  // 使用 setTimeout 确保复制逻辑执行完毕后再关闭
+  setTimeout(() => {
+    if (popup.value) {
+      popup.value.close();
+      console.log('[round] 对方找弹窗已关闭');
+    }
+  }, 100);
 };
 
 // 进入内容库（第二、三阶段：开库结束后）
