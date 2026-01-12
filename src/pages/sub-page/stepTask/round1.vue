@@ -176,6 +176,9 @@ const handleCopyModal = async (r: Four.GetContentDetail.ContentList & Four.GetCo
     source: 'lookfor',
   });
   await addRoundIntegral({ taskId, integralNum: 1 });
+
+  // 复制成功后关闭弹窗
+  popup.value!.close();
 };
 
 // 点击复制按钮
@@ -263,7 +266,15 @@ const getListInfo = async (props?: Partial<{ warehouseName: string; preStepDetai
 
 // 对方主动找处理逻辑
 const lookfor = async (props: { isStage?: boolean; warehouseName?: string; notRound?: boolean }) => {
+  // 保存原来的倒计时时间，避免在获取对方找内容时丢失
+  const originalEndTime = data.detail?.endTime;
+
   await getListInfo({ warehouseName: props?.warehouseName });
+
+  // 恢复原来的倒计时时间
+  if (originalEndTime) {
+    data.detail = { ...data.detail, endTime: originalEndTime };
+  }
 
   // 打开对方找弹窗
   popup.value!.open();
