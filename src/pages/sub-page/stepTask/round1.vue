@@ -92,6 +92,17 @@ import {
 } from '@/utils/familiar-local';
 import { taskModule } from '@/utils/data';
 import type { taskModuleKey } from '@/utils/data';
+// API
+import {
+  getHint,
+  getContentList,
+  getContentListOfAppoint,
+  getContentListOfStep,
+  addStage,
+  getRoundIntegral,
+  addRoundIntegral,
+  copyContentDetail,
+} from '@/utils/api';
 import stage1 from './shuxi/stage1';
 
 const data = reactive<any>({
@@ -176,127 +187,24 @@ const handleCopy = async (r: Four.GetContentDetail.ContentList & Four.GetContent
     taskId,
     source: (data.pageInfo as any)?.closeContent ? 'leave' : 'content',
   });
+
   // 继续下一个内容
   if (isKeep) {
     getListInfo({ preStepDetailId: r.stepDetailId });
   } else {
-    // 分数+1
-    await addRoundIntegral({ taskId, integralNum: 1 });
-    const gri = await getRoundIntegral(taskId); // 获得当前回合积分
-    const integral = gri?.integral || 0;
-    const roundNum = gri?.roundNum || 0;
-    let round3Score = 0;
+    // 离库结束，调用stage1判分逻辑
+    const result = await stage1(taskId);
 
-    // 第三回合结束后的分数
-    if (roundNum === 3) {
-      round3Score = integral;
+    // 更新任务详情
+    if (result?.detail) {
+      data.detail = result.detail;
     }
 
-    if (roundNum > 3) {
-      if ((integral >= 2 && roundNum >= 4) || (round3Score > 0 && (integral !== round3Score || roundNum >= 6))) {
-        if (roundNum >= 6) {
-          // 提示S7
-          getHint(
-            {
-              hintCode: 'xx07',
-              moduleCode,
-              stageNum: 0,
-            },
-            () => {
-              savePoint(
-                {
-                  stepNum: 1,
-                  stepType: 'familiar_1_stage_cd',
-                  taskId,
-                },
-                async () => {
-                  stage1(taskId);
-                }
-              );
-            },
-            {
-              showCancel: true,
-              cancelCb: () => {
-                // 提示S8
-                getHint(
-                  {
-                    hintCode: 'xx08',
-                    moduleCode,
-                    stageNum: 0,
-                  },
-                  () => {
-                    // 提示S9
-                    getHint({
-                      hintCode: 'xx09',
-                      moduleCode,
-                      stageNum: 0,
-                    });
-                  }
-                );
-              },
-            }
-          );
-        } else {
-          // 走第一阶段CD
-          savePoint({
-            stepNum: 0,
-            stepType: 'familiar_1_stage_cd',
-            taskId,
-          });
-        }
-      } else {
-        if (integral == round3Score && roundNum < 6) {
-          // 提示S6
-          getHint(
-            {
-              hintCode: 'xx06',
-              moduleCode,
-              stageNum: 0,
-            },
-            () => {
-              // 走第二个大CD
-              savePoint(
-                {
-                  stepNum: 1,
-                  stepType: 'familiar_1_cd2',
-                  taskId,
-                },
-                () => {
-                  data.stepSign = 'lookfor';
-                  init(taskId); // 重新获取任务详情
-                }
-              );
-            }
-          );
-        } else {
-          // 走第二个大CD
-          savePoint(
-            {
-              stepNum: 0,
-              stepType: 'familiar_1_cd2',
-              taskId,
-            },
-            () => {
-              data.stepSign = 'lookfor';
-              init(taskId); // 重新获取任务详情
-            }
-          );
-        }
-      }
-    } else {
-      // 走第一个大CD
-      savePoint(
-        {
-          stepNum: 0,
-          stepType: 'familiar_1_cd',
-          taskId,
-        },
-        () => {
-          data.stepSign = 'lookfor';
-          init(taskId); // 重新获取任务详情
-        }
-      );
-    }
+    // 设置对方找状态
+    data.stepSign = 'lookfor';
+
+    // 重新获取任务详情和内容列表
+    await init(taskId);
   }
 };
 
