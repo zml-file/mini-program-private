@@ -22,8 +22,11 @@ import {
   checkStage3RoundTransition,
   enterStage4,
   halfPriceRestart,
-  finishTask
+  finishTask,
+  getTask
 } from '@/utils/familiar-local';
+// 第四阶段UI
+import enterStage4UI, { handleMultiChatComplete } from './stage4';
 
 const moduleCode = 'familiar_module';
 
@@ -48,6 +51,15 @@ const stage3RoundEnd = async (taskId: number) => {
     round2Integral,
     stepType: detail?.stepType,
   });
+
+  // 检测是否是"多聊一次"回合
+  const task = getTask(taskId.toString());
+  if (task?.stage4?.returnedFromStage3 && task.stageIndex === 3) {
+    // 这是多聊一次回合，完成后返回第四阶段
+    console.log('检测到多聊一次回合，完成并返回第四阶段');
+    await handleMultiChatComplete(taskId);
+    return { detail };
+  }
 
   // 调用checkStage3RoundTransition获取判分结果
   const transitionResult = checkStage3RoundTransition(taskId);
@@ -77,6 +89,9 @@ const stage3RoundEnd = async (taskId: number) => {
       // 得分足够或特殊回合得分超过，直接进入第四阶段
       console.log('得分足够，直接进入第四阶段（无阶段CD）');
       // enterStage4已经在checkStage3RoundTransition中调用
+
+      // 调用第四阶段UI初始化函数，显示S20提示板
+      await enterStage4UI(taskId);
       break;
 
     case 'showPromptS15':
