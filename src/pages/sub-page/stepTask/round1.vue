@@ -168,17 +168,38 @@ const handleOk = () => {
 const handleCopyModal = async (r: Four.GetContentDetail.ContentList & Four.GetContentDetail.StatusVo) => {
   const moduleCode = data.moduleCode;
   const taskId = data.taskId;
-  await copyContentDetail({
-    moduleCode,
-    stepDetailId: r.stepDetailId,
-    sign: r.sign,
-    taskId,
-    source: 'lookfor',
-  });
-  await addRoundIntegral({ taskId, integralNum: 1 });
 
-  // 复制成功后关闭弹窗
-  popup.value!.close();
+  console.log('[round1] 对方找弹窗中点击复制');
+
+  try {
+    await copyContentDetail({
+      moduleCode,
+      stepDetailId: r.stepDetailId,
+      sign: r.sign,
+      taskId,
+      source: 'lookfor',
+    });
+    await addRoundIntegral({ taskId, integralNum: 1 });
+
+    console.log('[round1] 复制成功，关闭弹窗');
+
+    // 复制成功后关闭弹窗
+    popup.value?.close();
+
+    // 显示成功提示
+    uni.showToast({
+      title: '复制成功',
+      icon: 'success',
+      duration: 1500
+    });
+  } catch (error) {
+    console.error('[round1] 复制失败:', error);
+    uni.showToast({
+      title: '复制失败，请重试',
+      icon: 'none',
+      duration: 2000
+    });
+  }
 };
 
 // 点击复制按钮
