@@ -213,59 +213,272 @@ function initDefaults() {
 
     const libs: Libs = {
       opening: {
-        S1: [[mkText("o1-1", "开场S1-你好@请先简单介绍一下", "@"), mkZ("o1-2", "Z等待中")]],
-        S2: [[mkText("o2-1", "开场S2-继续推进", "@")]],
-        S3_5: [[mkText("o3.5-1", "开场S3.5-再次确认", "@")]],
+        S1: [[
+          mkText("o1-1", "您好，我是XXX@很高兴能与您交流@今天想和您分享一些信息", "@"),
+          mkZ("o1-2", "等待对方回复中，请稍候...")
+        ]],
+        S2: [[
+          mkText("o2-1", "上次和您聊得不错@今天继续沟通一些事情@希望不会打扰到您", "@"),
+          mkZ("o2-2", "等待对方确认，请耐心等待...")
+        ]],
+        S3_5: [[
+          mkText("o3.5-1", "距离上次交流有一段时间了@想再次确认您的想法@看看有什么新的进展", "@"),
+          mkZ("o3.5-2", "等待回应中...")
+        ]],
       },
       content: {
-        S1: [[mkText("c1-1", "您好b，{对方称呼}@{介绍自己的身份}@现在有几套不错的房子，方便聊聊吗D（好的打扰，有需要的话可以联系我&///我现在手上有几套不错的房源，和您简单介绍一下，看看有没有感兴趣的@{简单介绍房子的基本信息}++）AZ", "@"), mkZ("c1-2", "Z倒计时")]],
-        S2: [[mkText("c2-1", "内容S2-推进@继续@结尾", "@")]],
-        S3: [[mkText("c3-1", "内容S3-强化@引导", "@")]],
-        S4: [[mkText("c4-1", "内容S4-冲刺@总结", "@")]],
-        "S4.5": [[mkText("c4.5-1", "内容S4.5-特殊@补充", "@")]],
-        S5: [[mkText("c5-1", "内容S5-延迟@再尝试", "@")]],
-        S6: [[mkText("c6-1", "二阶段S6-开场后内容@推进", "@")]],
-        S7: [[mkText("c7-1", "二阶段S7-内容@继续", "@")]],
-        S8: [[mkText("c8-1", "二阶段S8-内容@继续", "@")]],
-        S9: [[mkText("c9-1", "二阶段S9-内容@继续", "@")]],
-        S10: [[mkText("c10-1", "二阶段S10-内容@继续", "@")]],
-        S11: [[mkText("c11-1", "二阶段S11-内容@继续", "@")]],
-        "S2.5": [[mkText("c2.5-1", "特殊回合内容S2.5-加油@坚持", "@")]],
-        S12: [[mkText("c12-1", "三阶段S12-内容@继续", "@")]],
-        S13: [[mkText("c13-1", "三阶段S13-内容@继续", "@")]],
-        S14: [[mkText("c14-1", "三阶段S14-内容@继续", "@")]],
-        S15: [[mkText("c15-1", "三阶段S15-内容@继续", "@")]],
-        S16: [[mkText("c16-1", "三阶段S16-内容@继续", "@")]],
-        S17: [[mkText("c17-1", "四阶段-马上邀约@邀约话术", "@")]],
-        S18: [[mkText("c18-1", "四阶段-邀约成功后的安排@跟进", "@"), mkD("c18-d", "D模式说明")]],
+        S1: [[
+          mkText("c1-1", "关于我们之前提到的话题@我这边有一些新的想法@想听听您的意见如何AZ", "@"),
+          mkZ("c1-2", "思考时间，等待对方反馈..."),
+          mkText("c1-3", "如果您方便的话@我们可以深入探讨一下@看看能否找到更好的方案", "@")
+        ]],
+        S2: [[
+          mkText("c2-1", "今天想和您推进一下我们的计划@目前进展还不错@下一步我建议这样做AZ", "@"),
+          mkZ("c2-2", "等待确认中..."),
+          mkText("c2-3", "您觉得这个方案可行吗@有什么需要调整的地方随时告诉我", "@")
+        ]],
+        S3: [[
+          mkText("c3-1", "我们的合作进入了关键阶段@需要进一步强化执行@具体来说有以下几点AZ", "@"),
+          mkZ("c3-2", "整理思路中，请稍候..."),
+          mkText("c3-3", "第一步先做基础准备@第二步落实具体细节@第三步跟进反馈", "@")
+        ]],
+        S4: [[
+          mkText("c4-1", "现在到了冲刺阶段@我们需要总结前期成果@同时规划下一步动作AZ", "@"),
+          mkZ("c4-2", "汇总信息中..."),
+          mkText("c4-3", "整体看下来效果不错@建议我们继续保持这个节奏@最后再完善一些细节", "@")
+        ]],
+        "S4.5": [[
+          mkText("c4.5-1", "补充一些额外的信息@这些内容可能对您有帮助@请您参考一下AZ", "@"),
+          mkZ("c4.5-2", "准备补充材料..."),
+          mkText("c4.5-3", "以上就是我想补充的内容@如有疑问随时沟通", "@")
+        ]],
+        S5: [[
+          mkText("c5-1", "虽然有些延迟@但我们还是要继续推进@让我们再尝试一次AZ", "@"),
+          mkZ("c5-2", "重新梳理方案..."),
+          mkText("c5-3", "调整后的计划更加可行@相信这次能有更好的结果", "@")
+        ]],
+        S6: [[
+          mkText("c6-1", "进入第二阶段后@我们的重点有所调整@主要关注以下方面AZ", "@"),
+          mkZ("c6-2", "分析新阶段任务..."),
+          mkText("c6-3", "新阶段需要更细致的操作@请您配合好每个环节", "@")
+        ]],
+        S7: [[
+          mkText("c7-1", "第二阶段进展顺利@我们继续按计划执行@目前没有太大偏差AZ", "@"),
+          mkZ("c7-2", "核对进度中..."),
+          mkText("c7-3", "保持现在的节奏@预计能按期完成目标", "@")
+        ]],
+        S8: [[
+          mkText("c8-1", "第二阶段中期@需要做一次全面检查@确保质量达标AZ", "@"),
+          mkZ("c8-2", "质量检查中..."),
+          mkText("c8-3", "检查结果显示@整体符合预期@个别细节需要微调", "@")
+        ]],
+        S9: [[
+          mkText("c9-1", "第二阶段后半程@开始准备收尾工作@同时为下一阶段做铺垫AZ", "@"),
+          mkZ("c9-2", "准备衔接工作..."),
+          mkText("c9-3", "收尾和铺垫同步进行@确保平稳过渡", "@")
+        ]],
+        S10: [[
+          mkText("c10-1", "第二阶段接近尾声@总结一下经验教训@为第三阶段做好准备AZ", "@"),
+          mkZ("c10-2", "总结经验中..."),
+          mkText("c10-3", "经验总结完成@下一阶段会更加顺畅", "@")
+        ]],
+        S11: [[
+          mkText("c11-1", "第二阶段最后冲刺@完善所有细节@确保万无一失AZ", "@"),
+          mkZ("c11-2", "最后检查中..."),
+          mkText("c11-3", "所有准备就绪@可以进入下一阶段了", "@")
+        ]],
+        "S2.5": [[
+          mkText("c2.5-1", "这是一个特殊回合@需要您加油坚持@我们一起克服困难AZ", "@"),
+          mkZ("c2.5-2", "鼓励支持中..."),
+          mkText("c2.5-3", "相信您能做到@继续保持信心@我会一直支持您", "@")
+        ]],
+        S12: [[
+          mkText("c12-1", "第三阶段开始@难度会有所提升@但相信您已经做好准备AZ", "@"),
+          mkZ("c12-2", "评估新阶段任务..."),
+          mkText("c12-3", "新阶段的挑战更大@但收获也会更多", "@")
+        ]],
+        S13: [[
+          mkText("c13-1", "第三阶段持续推进@保持专注和耐心@一步一个脚印前进AZ", "@"),
+          mkZ("c13-2", "稳步推进中..."),
+          mkText("c13-3", "进度符合预期@继续保持当前状态", "@")
+        ]],
+        S14: [[
+          mkText("c14-1", "第三阶段中期@需要加强执行力度@确保不偏离轨道AZ", "@"),
+          mkZ("c14-2", "强化执行中..."),
+          mkText("c14-3", "执行力度到位@效果开始显现", "@")
+        ]],
+        S15: [[
+          mkText("c15-1", "第三阶段后期@开始看到成果@但不能掉以轻心AZ", "@"),
+          mkZ("c15-2", "巩固成果中..."),
+          mkText("c15-3", "成果需要巩固@继续保持警惕", "@")
+        ]],
+        S16: [[
+          mkText("c16-1", "第三阶段收尾@准备最后的冲刺@向终点发起挑战AZ", "@"),
+          mkZ("c16-2", "最后冲刺准备中..."),
+          mkText("c16-3", "一切准备就绪@向最终目标前进", "@")
+        ]],
+        S17: [[
+          mkText("c17-1", "现在可以马上邀约了@我建议用以下话术@成功率会更高AZ", "@"),
+          mkZ("c17-2", "准备邀约话术..."),
+          mkText("c17-3", "建议这样说：我们找个时间见面详聊吧@您看这周末方便吗@我们可以约个轻松的地方", "@")
+        ]],
+        S18: [[
+          mkText("c18-1", "邀约成功了，恭喜！@接下来需要安排好见面细节@以下是一些建议AZ", "@"),
+          mkZ("c18-2", "安排见面细节..."),
+          mkText("c18-3", "地点选择很重要@时间安排要合理@见面前做好充分准备", "@"),
+          mkD("c18-d", "D模式：您可以选择进入深度指导模式，获取更详细的见面指南")
+        ]],
       },
       leaving: {
-        S1: [[mkText("l1-1", "FF打扰了，后续您有什么想了解的可以再联系我离库1LLFF打扰您了，后续如果有感兴趣的可以再联系我离库1LLFF耽误您了，有什么问题都可以再联系我离库1LL", "@")]],
-        S2: [[mkText("l2-1", "（耽误您时间了，后续有什么想了解的可以再联系我离库2///打扰您了，后续有新房源我再和您介绍离库2）@（那先不打扰您了，后续想了解什么随时联系我离库2///那我这边为您准备一份详细的资料，后续发送给您离库2@有任何问题都可以联系我，离库2先不打扰了++///您可以考虑考虑，有想了解的可以再联系我离库2）@（那就先不打扰了，有兴趣您再联系我离库2///那不打扰了，有问题您随时联系离库2）", "@")]],
-        S3: [[mkText("l3-1", "特殊回合离库S3-那先不打扰了@后续有问题可以联系我", "@")]],
-        "S3.5": [[mkText("l3.5-1", "离库S3.5-特殊总结@进入CD", "@")]],
-        S4: [[mkText("l4-1", "二阶段离库S4-总结@进入CD", "@")]],
-        S5: [[mkText("l5-1", "三阶段离库S5-总结@进入CD", "@")]],
+        S1: [[
+          mkText("l1-1", "打扰了，今天就聊到这里@后续有什么想了解的随时联系我@祝您一切顺利", "@")
+        ]],
+        S2: [[
+          mkText("l2-1", "（耽误您时间了，感谢您的耐心@后续有新信息我会及时告知您///打扰您了，今天的交流很愉快@期待下次继续沟通）", "@"),
+          mkText("l2-2", "（那先不打扰您了，有任何问题随时联系我///我这边会准备一份详细资料，稍后发送给您@有疑问随时沟通++///您可以考虑考虑，有想法随时告诉我）", "@"),
+          mkText("l2-3", "（那就先这样，有兴趣再联系我///那不打扰了，有需要随时找我）", "@")
+        ]],
+        S3: [[
+          mkText("l3-1", "特殊回合结束了@那先不打扰您了@后续有问题随时联系我", "@")
+        ]],
+        "S3.5": [[
+          mkText("l3.5-1", "本轮特殊任务完成@总结一下今天的进展@接下来进入休息期", "@")
+        ]],
+        S4: [[
+          mkText("l4-1", "第二阶段本回合结束@总结一下收获@休息调整后继续", "@")
+        ]],
+        S5: [[
+          mkText("l5-1", "第三阶段本回合完成@整体效果不错@下次继续努力", "@")
+        ]],
       },
       opponent: {
-        S2: [[mkText("op2-1", "对方找S2-回复1@回复2@回复3@回复4", "@")]],
-        S3: [[mkText("op3-1", "对方找S3-回复1@回复2@回复3@回复4", "@")]],
-        S4: [[mkText("op4-1", "对方找S4-回复1@回复2@回复3@回复4", "@")]],
+        S2: [[
+          mkText("op2-1", "对方主动联系了@可以这样回复：很高兴收到您的消息", "@"),
+          mkText("op2-2", "我一直在等您的反馈@现在我们可以继续之前的话题", "@"),
+          mkText("op2-3", "关于您提到的问题@我这边已经准备好解决方案", "@"),
+          mkText("op2-4", "期待我们能够达成一致@共同推进这件事", "@")
+        ]],
+        S3: [[
+          mkText("op3-1", "收到对方消息了@回复：感谢您主动联系", "@"),
+          mkText("op3-2", "您的关注让我很欣慰@说明我们的方向是对的", "@"),
+          mkText("op3-3", "针对您的疑问@我详细说明一下具体情况", "@"),
+          mkText("op3-4", "相信通过沟通@我们能找到最佳方案", "@")
+        ]],
+        S4: [[
+          mkText("op4-1", "对方主动找您了@这是好信号@回复：很高兴您主动联系", "@"),
+          mkText("op4-2", "您的主动让事情变得简单@我们直接聊正事吧", "@"),
+          mkText("op4-3", "关于下一步计划@我有几个建议供您参考", "@"),
+          mkText("op4-4", "希望我们能保持这样的沟通频率@一起把事情做好", "@")
+        ]],
       },
       qa: {
         S1: [
-          { id: "qa1-1", title: "如何开始第一回合？", answerChain: [mkText("qa1-1-1", "答案@步骤@注意", "@")] },
-          { id: "qa1-2", title: "遇到Z怎么办？", answerChain: [mkZ("qa1-2-1", "Z等待@倒计时")] },
+          {
+            id: "qa1-1",
+            title: "如何开始第一回合？",
+            answerChain: [
+              mkText("qa1-1-1", "首先要做好心理准备@然后按照系统提示逐步操作@注意把握节奏和时机", "@"),
+              mkText("qa1-1-2", "开场白要自然@不要显得太刻意@让对方感觉舒适", "@")
+            ]
+          },
+          {
+            id: "qa1-2",
+            title: "遇到Z怎么办？",
+            answerChain: [
+              mkZ("qa1-2-1", "遇到Z标记时需要等待@这是系统设定的思考时间"),
+              mkText("qa1-2-2", "利用Z时间整理思路@准备下一步话术@不要着急", "@")
+            ]
+          },
+          {
+            id: "qa1-3",
+            title: "对方不回复怎么办？",
+            answerChain: [
+              mkText("qa1-3-1", "保持耐心，不要催促@给对方足够的思考时间@过于急切反而适得其反", "@")
+            ]
+          },
+          {
+            id: "qa1-4",
+            title: "什么时候使用离开库？",
+            answerChain: [
+              mkText("qa1-4-1", "当一个回合内容完成后@使用离开库礼貌结束@为下次沟通留下好印象", "@")
+            ]
+          },
         ],
-        S2: [{ id: "qa2-1", title: "第二阶段策略", answerChain: [mkText("qa2-1-1", "重点@节奏@技巧", "@")] }],
-        S3: [{ id: "qa3-1", title: "第三阶段策略", answerChain: [mkText("qa3-1-1", "重点@节奏@技巧", "@")] }],
+        S2: [
+          {
+            id: "qa2-1",
+            title: "第二阶段策略",
+            answerChain: [
+              mkText("qa2-1-1", "第二阶段重点是建立信任@节奏要稳不要急@技巧在于循序渐进", "@"),
+              mkText("qa2-1-2", "注意观察对方反应@及时调整沟通方式@保持灵活性", "@")
+            ]
+          },
+          {
+            id: "qa2-2",
+            title: "如何提升得分？",
+            answerChain: [
+              mkText("qa2-2-1", "完整走完每个流程@使用离开库可得分@对方找功能也能加分", "@")
+            ]
+          },
+          {
+            id: "qa2-3",
+            title: "什么时候用对方找？",
+            answerChain: [
+              mkText("qa2-3-1", "在大CD期间对方找功能会激活@等待倒计时结束后可以使用@每回合只能用一次", "@")
+            ]
+          },
+        ],
+        S3: [
+          {
+            id: "qa3-1",
+            title: "第三阶段策略",
+            answerChain: [
+              mkText("qa3-1-1", "第三阶段是关键期@重点在于深化关系@技巧是把握机会主动推进", "@"),
+              mkText("qa3-1-2", "注意控制推进节奏@不要过于激进@稳扎稳打最重要", "@")
+            ]
+          },
+          {
+            id: "qa3-2",
+            title: "特殊回合如何应对？",
+            answerChain: [
+              mkText("qa3-2-1", "特殊回合是补救机会@认真对待每次机会@按提示操作即可", "@")
+            ]
+          },
+          {
+            id: "qa3-3",
+            title: "半价重开值得吗？",
+            answerChain: [
+              mkText("qa3-3-1", "如果对这段关系很看重@半价重开是很好的选择@可以重新规划策略", "@")
+            ]
+          },
+        ],
       },
       questionnaire: {
         thresholdX: 10,
         questions: [
-          { id: "q1", title: "有对方线上可交流方式吗？", options: [{ id: "A", text: "是", score: 0 }, { id: "B", text: "否", score: 0 }] },
-          { id: "q2", title: "愿意让对方20天见不到您并按指引操作？", options: [{ id: "A", text: "是", score: 4 }, { id: "B", text: "否", score: 0 }] },
-          { id: "q3", title: "确认完成第一阶段前不主动联系？", options: [{ id: "A", text: "是", score: 6 }, { id: "B", text: "否", score: 0 }] },
+          { id: "q1", title: "有对方线上可交流方式吗?", options: [{ id: "A", text: "是", score: 0 }, { id: "B", text: "否", score: 0 }] },
+          {
+            id: "q2",
+            title: "愿意让对方20天见不到您并按指引操作？",
+            options: [
+              { id: "A", text: "是", score: 4 },
+              { id: "B", text: "否", score: 0 },
+              { id: "C", text: "C", score: 5 },
+              { id: "D", text: "D", score: 7 },
+              { id: "E", text: "E", score: 4 }
+            ]
+          },
+          {
+            id: "q3",
+            title: "确认完成第一阶段前不主动联系？",
+            options: [
+              { id: "A", text: "是", score: 6 },
+              { id: "B", text: "否", score: 0 },
+              { id: "C", text: "C", score: 6 },
+              { id: "D", text: "D", score: 10 },
+              { id: "E", text: "E", score: 10 }
+            ]
+          },
           { id: "q4", title: "问题四（不计分）", options: [{ id: "A", text: "选项A", score: 0 }, { id: "B", text: "选项B", score: 0 }] },
           { id: "q5", title: "问题五（不计分）", options: [{ id: "A", text: "选项A", score: 0 }, { id: "B", text: "选项B", score: 0 }] },
         ],
@@ -757,20 +970,178 @@ export function submitQuestionnaire(taskId: string): { routed: RoutedModule; nex
   const X = libs.questionnaire.thresholdX;
   const score = t.questionnaire.totalScore;
 
-  let routed: RoutedModule = "familiar";
-  if (score < X) {
-    // 按文档：问1之后“是” -> 不熟模块；“否” -> 陌生模块（此处仅路由标记）
-    routed = "familiar"; // 保持在熟悉模块，仅做标记，前端可根据askFlow决定跳转其他模块
-  }
-
-  // 进入问1流程
+  // 更新任务状态：无论得分多少，都保持在第0阶段
   t.stageIndex = 0;
   t.stepIndex = 0;
   t.lastActionAt = Date.now();
+
+  // 保存问卷路由信息供前端判断使用：
+  // - 得分≥X(10分)：问1 → 问2 → S2提示板 → 9-10天倒计时 → 问3 → S4提示板 → XX-XX天倒计时 → 第一阶段
+  // - 得分<X(10分)：问1 → (是→不熟模块 / 否→陌生模块)
+  if (score >= X) {
+    t.questionnaire.routedModule = "familiar"; // 得分达标，后续走熟悉模块的问1/问2/问3流程
+  } else {
+    t.questionnaire.routedModule = "familiar"; // 得分不足，问1后路由到不熟/陌生模块
+  }
+
   set(`fm:task:${taskId}`, t);
 
-  return { routed, next: "问1" };
+  // 无论得分多少，都先进入"问1"流程
+  return { routed: "familiar", next: "问1" };
 }
+
+/**
+ * 处理"问1"的用户选择
+ * 问题："有对方微信或其他线上可交流方式吗？"
+ * 选项："是"和"否"
+ */
+export function handleAsk1(taskId: string, answer: "是" | "否"): { ok: boolean; action: string; reason?: string } {
+  initDefaults();
+  const t = getTask(taskId);
+  if (!t) return { ok: false, action: "error", reason: "任务不存在" };
+
+  const libs: Libs = get("fm:libs");
+  const X = libs.questionnaire.thresholdX;
+  const score = t.questionnaire.totalScore;
+
+  // 记录问1的答案
+  t.askFlow.ask1 = answer;
+  t.lastActionAt = Date.now();
+  set(`fm:task:${taskId}`, t);
+
+  if (score >= X) {
+    // 得分达标的情况
+    if (answer === "是") {
+      // 进入"问2"
+      return { ok: true, action: "showAsk2", reason: "进入问2流程" };
+    } else {
+      // 显示提示板S1，然后回到"问1"
+      return { ok: true, action: "showPromptS1", reason: "显示提示板S1，用户点击确定后回到问1" };
+    }
+  } else {
+    // 得分不足的情况
+    if (answer === "是") {
+      // 进入不熟模块
+      t.questionnaire.routedModule = "unfamiliar";
+      set(`fm:task:${taskId}`, t);
+      return { ok: true, action: "routeToUnfamiliar", reason: "得分不足，路由到不熟模块" };
+    } else {
+      // 进入陌生模块
+      t.questionnaire.routedModule = "stranger";
+      set(`fm:task:${taskId}`, t);
+      return { ok: true, action: "routeToStranger", reason: "得分不足，路由到陌生模块" };
+    }
+  }
+}
+
+/**
+ * 处理"问2"的用户选择
+ * 问题："需要让对方见不到您20天左右。其中前10天左右什么也不用做，后10天左右请根据之后指引操作，确定可以开始并准备好之后请选"是"（即是否准备好）"
+ * 选项："是"和"否"
+ */
+export function handleAsk2(taskId: string, answer: "是" | "否"): { ok: boolean; action: string; reason?: string } {
+  initDefaults();
+  const t = getTask(taskId);
+  if (!t) return { ok: false, action: "error", reason: "任务不存在" };
+
+  // 记录问2的答案
+  t.askFlow.ask2 = answer;
+  t.lastActionAt = Date.now();
+
+  if (answer === "是") {
+    // 显示提示板S2，然后进入9-10天的倒计时
+    const daysRange = { minDays: 9, maxDays: 10 };
+    const days = randInt(daysRange.minDays, daysRange.maxDays);
+    const countdownMs = getCountdownTimeMs(days * 24 * 60 * 60 * 1000);
+
+    t.stageCdUnlockAt = Date.now() + countdownMs;
+    t.listBadge = "下次聊天开启倒计时";
+    t.listCountdownEndAt = t.stageCdUnlockAt;
+
+    // 标记当前在等待问3
+    t.stepIndex = 2; // 0=问卷, 1=问1, 2=等待问3
+
+    set(`fm:task:${taskId}`, t);
+    return { ok: true, action: "showPromptS2AndStartCountdown", reason: `显示提示板S2，进入${days}天倒计时，倒计时结束后弹出问3` };
+  } else {
+    // 显示提示板S3，然后回到"问2"
+    set(`fm:task:${taskId}`, t);
+    return { ok: true, action: "showPromptS3", reason: "显示提示板S3，用户点击确定后回到问2" };
+  }
+}
+
+/**
+ * 处理"问3"的用户选择
+ * 问题："请确定完成第一阶段，即倒计时结束前未与对方见面或主动联系，是或否？"
+ * 选项："是"和"否"
+ */
+export function handleAsk3(taskId: string, answer: "是" | "否"): { ok: boolean; action: string; reason?: string; countdownDays?: number } {
+  initDefaults();
+  const t = getTask(taskId);
+  if (!t) return { ok: false, action: "error", reason: "任务不存在" };
+
+  // 记录问3的答案
+  t.askFlow.ask3 = answer;
+  t.lastActionAt = Date.now();
+
+  if (answer === "是") {
+    // 显示提示板S4，然后进入XX-XX天的倒计时，倒计时结束后进入第一阶段
+    // TODO: 需要确认具体天数范围，这里暂时使用3-5天
+    const daysRange = { minDays: 3, maxDays: 5 };
+    const days = randInt(daysRange.minDays, daysRange.maxDays);
+    const countdownMs = getCountdownTimeMs(days * 24 * 60 * 60 * 1000);
+
+    t.stageCdUnlockAt = Date.now() + countdownMs;
+    t.listBadge = "下次聊天开启倒计时";
+    t.listCountdownEndAt = t.stageCdUnlockAt;
+
+    // 标记准备进入第一阶段
+    t.stepIndex = 3; // 0=问卷, 1=问1, 2=等待问3, 3=等待进入第一阶段
+
+    // TODO: 激活图文模块的图文特殊库权限
+    // 在6-9天的时间范围内随机一个时间，达到随机时间后，刷新该用户图文特殊库的返回内容
+
+    set(`fm:task:${taskId}`, t);
+    return { ok: true, action: "showPromptS4AndStartCountdown", reason: `显示提示板S4，进入${days}天倒计时，倒计时结束后进入第一阶段`, countdownDays: days };
+  } else {
+    // 显示提示板S3，然后回到"问2"
+    set(`fm:task:${taskId}`, t);
+    return { ok: true, action: "showPromptS3", reason: "显示提示板S3，用户点击确定后回到问2" };
+  }
+}
+
+/**
+ * 检查第0阶段的倒计时是否结束，并执行相应动作
+ */
+export function checkStage0Countdown(taskId: string): { ok: boolean; action: string; reason?: string } {
+  initDefaults();
+  const t = getTask(taskId);
+  if (!t) return { ok: false, action: "error", reason: "任务不存在" };
+
+  const now = Date.now();
+
+  // 如果有stageCdUnlockAt且已到期
+  if (t.stageCdUnlockAt && now >= t.stageCdUnlockAt) {
+    if (t.stepIndex === 2) {
+      // 问2后的倒计时结束，弹出问3
+      t.stageCdUnlockAt = null;
+      t.listCountdownEndAt = null;
+      t.listBadge = "聊天任务进行中";
+      set(`fm:task:${taskId}`, t);
+      return { ok: true, action: "showAsk3", reason: "问2后的倒计时结束，弹出问3" };
+    } else if (t.stepIndex === 3) {
+      // 问3后的倒计时结束，进入第一阶段
+      t.stageCdUnlockAt = null;
+      t.listCountdownEndAt = null;
+      t.listBadge = "聊天任务进行中";
+      set(`fm:task:${taskId}`, t);
+      return { ok: true, action: "enterStage1", reason: "问3后的倒计时结束，进入第一阶段" };
+    }
+  }
+
+  return { ok: true, action: "waiting", reason: "倒计时尚未结束" };
+}
+
 
 // Idle handling
 export function updateLastAction(taskId: string) {
@@ -1478,6 +1849,40 @@ export function startStage2Round(taskId: string, roundNumber: number) {
 
   set(`fm:task:${taskId}`, t);
   return { ok: true, openingLibId, contentLibId, leavingLibId };
+}
+
+/**
+ * 完成第二阶段回合
+ * @param taskId 任务ID
+ * @param roundScore 本回合得分
+ * @returns 操作结果
+ */
+export function finishStage2Round(taskId: string, roundScore: number) {
+  initDefaults();
+  const t = getTask(taskId);
+  if (!t || !t.stage2) return { ok: false, reason: "任务不在第二阶段" };
+
+  const roundNumber = t.roundIndex || 0;
+
+  // 记录当前回合得分
+  t.stage2.roundScores[roundNumber - 1] = roundScore;
+  t.stageScore += roundScore;
+  t.totalScore += roundScore;
+
+  // 如果是第二回合，计算前两回合总分
+  if (roundNumber === 2) {
+    t.stage2.firstTwoRoundsTotal =
+      t.stage2.roundScores.slice(0, 2).reduce((sum, score) => sum + score, 0);
+
+    console.log(`[finishStage2Round] 第${roundNumber}回合结束:`, {
+      roundScore,
+      stageScore: t.stageScore,
+      firstTwoRoundsTotal: t.stage2.firstTwoRoundsTotal
+    });
+  }
+
+  set(`fm:task:${taskId}`, t);
+  return { ok: true, task: t };
 }
 
 /**

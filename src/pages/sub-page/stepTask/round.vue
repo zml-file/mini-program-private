@@ -25,7 +25,7 @@
 
       <!-- 大CD倒计时（下方） -->
       <!-- 特殊回合a/b的大CD使用大倒计时，其他使用小倒计时 -->
-      <view class="m-bottom-30" v-if="data.currentStep === 'stage_cd'">
+      <view class="m-bottom-30" v-if="data.currentStep === 'stage_cd' && !data.isPaused">
         <bc-countdown
           :size="isSpecialRoundBigCd ? 'default' : 'small'"
           :time="data.detail?.endTime"
@@ -42,7 +42,7 @@
       </view>
 
       <!-- Z倒计时（只在有倒计时结束时间时显示） -->
-      <view class="m-bottom-30" v-if="data.currentStep === 'z' && data.zEndTimeStr">
+      <view class="m-bottom-30" v-if="data.currentStep === 'z' && data.zEndTimeStr && !data.isPaused">
         <bc-countdown
           :key="data.zEndTimeStr"
           size="small"
@@ -88,7 +88,7 @@
           :second="zInit.seconds"
           desc="倒计时结束后，将回复新内容"
           @timeup="zTimeup"
-          v-if="data.currentStep === 'z' && data.zEndTimeStr"
+          v-if="data.currentStep === 'z' && data.zEndTimeStr && !data.isPaused"
           :size="small"
           />
       <!-- D出现 -->
@@ -100,10 +100,10 @@
         这里是关于{{ data.stepSign?.toLocaleUpperCase() }}这个操作的提示，只有前三次显示。
       </bc-tip-row>
       <!-- 大CD倒计时 -->
-      <bc-countdown v-if="['z'].includes(data.stepSign)" size="small" :time="data.detail?.endTime" :desc="zCountdownMsg"
+      <bc-countdown v-if="['z'].includes(data.stepSign) && !data.isPaused" size="small" :time="data.detail?.endTime" :desc="zCountdownMsg"
         @timeup="zTimeup" />
       <!-- 对方找倒计时 -->
-      <bc-countdown v-if="data.stepSign === 'lookfor'" size="small" :time="data.detail?.otherFindEndTime"
+      <bc-countdown v-if="data.stepSign === 'lookfor' && !data.isPaused" size="small" :time="data.detail?.otherFindEndTime"
         desc="倒计时结束后，对方找按钮将变为可点击" @timeup="lookforTimeup" />
     </view>
     <!-- 提示弹窗 -->
@@ -115,7 +115,7 @@
       </view>
 
       <!--  内容列表，根据倒计时状态禁用复制按钮 -->
-      <bc-copy-list :info="data.pageInfo || {}" :disabled="!data.canCopyLookfor" @copy="handleCopy" />
+      <bc-copy-list :info="data.pageInfo || {}" :disabled="!data.canCopyLookfor" @copy="handleCopyInPopup" />
     </md-dialog>
   </md-page>
 </template>
@@ -141,6 +141,8 @@ import {
   enterStageCd,
   startRound,
   markChainUsed,
+  // 第1阶段函数
+  enterStage1,
   startStage1Round,
   checkStage1RoundTransition,
   setRoundCdUnlock,
@@ -229,7 +231,10 @@ const data = reactive<any>({
 
   // 弹窗关闭防抖（防止cancel事件导致重复进入）
   isClosingPopup: false,
-  
+
+  // 倒计时暂停/恢复相关
+  isPaused: false,              // 是否处于暂停状态（控制倒计时组件显示/隐藏）
+
 });
 const popup = ref<any>(null);
 
@@ -286,7 +291,31 @@ const loadTaskData = () => {
   if (task.stageIndex === 1) {
     // 第一阶段
     console.log('[loadTaskData] 第一阶段');
-    
+
+    // 【修复】检查stage1数据是否初始化，如果没有则自动初始化
+    if (!task.stage1) {
+      console.log('[loadTaskData] stage1数据未初始化，自动调用enterStage1');
+      const result = enterStage1(data.taskId);
+      if (result.ok) {
+        // 重新读取任务数据
+        const updatedTask = getTask(data.taskId);
+        if (updatedTask) {
+          task = updatedTask;
+          data.stage1 = task.stage1;
+          console.log('[loadTaskData] stage1初始化成功');
+        }
+      } else {
+        uni.showToast({
+          title: result.reason || '初始化失败',
+          icon: 'error'
+        });
+        setTimeout(() => {
+          uni.navigateBack();
+        }, 2000);
+        return;
+      }
+    }
+
     // 检查是否在回合CD中，如果是则清除离库恢复数据并显示CD倒计时
     const now = Date.now();
     if (task.roundCdUnlockAt && now < (task.roundCdUnlockAt as number)) {
@@ -294,9 +323,27 @@ const loadTaskData = () => {
       try {
         uni.removeStorageSync(`fm:leaving:${data.taskId}`);
       } catch (e) {}
-      
+
+      // 设置倒计时显示
       data.currentStep = 'stage_cd';
       data.cdMsg = '下次聊天开启倒计时';
+
+      // 【修复】设置endTime用于倒计时组件显示
+      const roundCdTime = task.roundCdUnlockAt as number;
+      const d = new Date(roundCdTime);
+      const pad = (n:number)=> (n<10?`0${n}`:`${n}`);
+      const y = d.getFullYear();
+      const m = pad(d.getMonth()+1);
+      const dd = pad(d.getDate());
+      const h = pad(d.getHours());
+      const mi = pad(d.getMinutes());
+      const s = pad(d.getSeconds());
+      data.detail = {
+        endTime: `${y}-${m}-${dd} ${h}:${mi}:${s}`,
+        stageNum: task.stageIndex,
+        roundNum: task.roundIndex || 0
+      };
+
       return;
     }
     
@@ -320,6 +367,88 @@ const loadTaskData = () => {
   } else if (task.stageIndex === 2 || task.stageIndex === 3 || task.stageIndex === 4) {
     // 第二、三、四阶段：调用_round加载内容
     console.log('[loadTaskData] 第', task.stageIndex, '阶段，调用_round加载内容');
+
+    // 【修复】检查阶段数据是否初始化，如果没有则自动初始化
+    if (task.stageIndex === 2 && !task.stage2) {
+      console.log('[loadTaskData] stage2数据未初始化，自动调用enterStage2');
+      // 【修复】保存原来的回合数和得分，避免被重置
+      const savedRoundIndex = task.roundIndex; // 保存当前回合数
+      const savedStageScore = task.stageScore; // 保存当前得分
+      const result = enterStage2(data.taskId);
+      if (result.ok) {
+        // 重新获取任务并恢复回合数和得分
+        const updatedTask = getTask(data.taskId);
+        if (updatedTask) {
+          updatedTask.roundIndex = savedRoundIndex;
+          updatedTask.stageScore = savedStageScore;
+          uni.setStorageSync(`fm:task:${data.taskId}`, updatedTask);
+          task = updatedTask;
+          console.log('[loadTaskData] stage2初始化成功，已恢复回合数:', savedRoundIndex, '和得分:', savedStageScore);
+        }
+      } else {
+        uni.showToast({
+          title: result.reason || '初始化失败',
+          icon: 'error'
+        });
+        setTimeout(() => {
+          uni.navigateBack();
+        }, 2000);
+        return;
+      }
+    } else if (task.stageIndex === 3 && !task.stage3) {
+      console.log('[loadTaskData] stage3数据未初始化，自动调用enterStage3');
+      // 【修复】保存原来的回合数和得分，避免被重置
+      const savedRoundIndex = task.roundIndex; // 保存当前回合数
+      const savedStageScore = task.stageScore; // 保存当前得分
+      const result = enterStage3(data.taskId);
+      if (result.ok) {
+        // 重新获取任务并恢复回合数和得分
+        const updatedTask = getTask(data.taskId);
+        if (updatedTask) {
+          updatedTask.roundIndex = savedRoundIndex;
+          updatedTask.stageScore = savedStageScore;
+          uni.setStorageSync(`fm:task:${data.taskId}`, updatedTask);
+          task = updatedTask;
+          console.log('[loadTaskData] stage3初始化成功，已恢复回合数:', savedRoundIndex, '和得分:', savedStageScore);
+        }
+      } else {
+        uni.showToast({
+          title: result.reason || '初始化失败',
+          icon: 'error'
+        });
+        setTimeout(() => {
+          uni.navigateBack();
+        }, 2000);
+        return;
+      }
+    } else if (task.stageIndex === 4 && !task.stage4) {
+      console.log('[loadTaskData] stage4数据未初始化，自动调用enterStage4');
+      // 【修复】保存原来的回合数和得分，避免被重置
+      const savedRoundIndex = task.roundIndex; // 保存当前回合数
+      const savedStageScore = task.stageScore; // 保存当前得分
+      const result = enterStage4(data.taskId);
+      if (result.ok) {
+        // 重新获取任务并恢复回合数和得分
+        const updatedTask = getTask(data.taskId);
+        if (updatedTask) {
+          updatedTask.roundIndex = savedRoundIndex;
+          updatedTask.stageScore = savedStageScore;
+          uni.setStorageSync(`fm:task:${data.taskId}`, updatedTask);
+          task = updatedTask;
+          console.log('[loadTaskData] stage4初始化成功，已恢复回合数:', savedRoundIndex, '和得分:', savedStageScore);
+        }
+      } else {
+        uni.showToast({
+          title: result.reason || '初始化失败',
+          icon: 'error'
+        });
+        setTimeout(() => {
+          uni.navigateBack();
+        }, 2000);
+        return;
+      }
+    }
+
     data.detail = {
       stageNum: task.stageIndex,
       roundNum: task.roundIndex || 0,
@@ -677,6 +806,12 @@ const handleLookforClick = async () => {
   data.lookforScored = false;
   data.canCopyLookfor = false;
   data.lookforCountdown = 0;
+
+  // 【新增】暂停功能页面的倒计时
+  if (!data.isPaused) {
+    data.isPaused = true;
+    console.log('[handleLookforClick] 暂停页面倒计时');
+  }
 
   // 打开对话框
   popup.value?.open();
@@ -1278,6 +1413,23 @@ const handleCopy = (item: any) => {
       }
     }
   });
+};
+
+// 处理对方找弹窗中的复制（包装函数）
+const handleCopyInPopup = (item: any) => {
+  console.log('[round] 对方找弹窗中点击复制');
+
+  // 调用原来的 handleCopy 函数
+  handleCopy(item);
+
+  // 无论复制后的逻辑如何，都关闭弹窗
+  // 使用 setTimeout 确保复制逻辑执行完毕后再关闭
+  setTimeout(() => {
+    if (popup.value) {
+      popup.value.close();
+      console.log('[round] 对方找弹窗已关闭');
+    }
+  }, 100);
 };
 
 // 进入内容库（第二、三阶段：开库结束后）
@@ -2270,7 +2422,8 @@ const _round = async (r?: { taskId?: number }) => {
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     };
 
-    const endTimeTimestamp = localTask.roundCdUnlockAt || localTask.stageCdUnlockAt || null;
+    // 修复：对方找CD优先级应该高于回合CD，确保对方找复制后能正确显示倒计时
+    const endTimeTimestamp = localTask.opponentFindCdUnlockAt || localTask.roundCdUnlockAt || localTask.stageCdUnlockAt || null;
     const endTimeStr = formatTime(endTimeTimestamp as number | null);
     const otherFindEndTimeStr = formatTime(localTask.opponentFindUnlockAt as number | null);
 
@@ -2447,6 +2600,8 @@ const _round = async (r?: { taskId?: number }) => {
       // 如果是 stage_round_content，说明需要获取内容（开库→内容库→离库）
       if (stepType === 'stage_round_content') {
         console.log('第2阶段第一回合，stepType=stage_round_content，获取内容');
+        data.stepSign = ''; // 清除之前的状态标记
+        data.currentStep = 'normal';
         await getListInfo();
       }
       // 如果是 CD 状态，先尝试获取内容，如果没有内容再显示"对方找"按钮
@@ -2460,11 +2615,15 @@ const _round = async (r?: { taskId?: number }) => {
           data.stepSign = 'lookfor';
         } else {
           console.log('第2阶段第一回合，有内容，显示内容列表');
+          data.stepSign = '';
+          data.currentStep = 'normal';
         }
       }
       // 其他情况，尝试获取内容
       else {
         console.log('第2阶段第一回合，未知stepType，尝试获取内容');
+        data.stepSign = '';
+        data.currentStep = 'normal';
         await getListInfo();
       }
     }
@@ -2476,11 +2635,18 @@ const _round = async (r?: { taskId?: number }) => {
         const hasContent = await getListInfo();
         if (!hasContent) {
           data.stepSign = 'lookfor';
+        } else {
+          data.stepSign = '';
+          data.currentStep = 'normal';
         }
       } else if (stepType === 'stage_round_content') {
+        data.stepSign = '';
+        data.currentStep = 'normal';
         await getListInfo();
       } else {
         console.log('第2阶段第', roundNum, '回合，未知stepType，尝试获取内容');
+        data.stepSign = '';
+        data.currentStep = 'normal';
         await getListInfo();
       }
     }
@@ -2502,12 +2668,17 @@ const _round = async (r?: { taskId?: number }) => {
     if (['familiar_3_cd'].includes(stepType)) {
       // CD 阶段，显示"对方找"按钮
       data.stepSign = 'lookfor';
+      data.currentStep = 'stage_cd';
     } else if (stepType === 'stage_round_content') {
       // 回合内容阶段，获取列表信息
+      data.stepSign = ''; // 清除之前的状态标记
+      data.currentStep = 'normal';
       await getListInfo();
     } else {
       // 默认处理：尝试获取列表信息
       console.log('第3阶段未知的 stepType，尝试获取列表信息:', stepType);
+      data.stepSign = '';
+      data.currentStep = 'normal';
       await getListInfo();
     }
   }
@@ -2587,6 +2758,12 @@ const handleClose = async () => {
     return;
   }
   data.isClosingPopup = true;
+
+  // 【新增】恢复功能页面的倒计时
+  if (data.isPaused) {
+    data.isPaused = false;
+    console.log('[handleClose] 恢复页面倒计时');
+  }
 
   //  停止倒计时
   stopLookforCountdown();
@@ -3062,7 +3239,8 @@ onLoad(async options => {
       const d = new Date(ts as number);
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     };
-    const endTs = (t.zUnlockAt as number) || (t.roundCdUnlockAt as number) || (t.stageCdUnlockAt as number) || (t.opponentFindCdUnlockAt as number) || null;
+    // 修复：统一倒计时优先级顺序 Z > 对方找CD > 回合CD > 阶段CD
+    const endTs = (t.zUnlockAt as number) || (t.opponentFindCdUnlockAt as number) || (t.roundCdUnlockAt as number) || (t.stageCdUnlockAt as number) || null;
 
     data.detail = {
       taskName: t.name,
@@ -3102,6 +3280,10 @@ onLoad(async options => {
     }
     // 最小内容列表占位（当前链路可选）
     data.pageInfo = data.pageInfo || { contentList: [], statusVo: {}, closeContent: false };
+
+    // 【修复】重新进入页面时也需要调用 loadTaskData() 来加载内容
+    // 确保 stage 对象初始化、currentLibChain 设置、内容加载等逻辑正常执行
+    loadTaskData();
     return;
   }
 

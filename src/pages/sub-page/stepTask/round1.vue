@@ -92,7 +92,20 @@ import {
 } from '@/utils/familiar-local';
 import { taskModule } from '@/utils/data';
 import type { taskModuleKey } from '@/utils/data';
+// API
+import {
+  getHint,
+  getContentList,
+  getContentListOfAppoint,
+  getContentListOfStep,
+  addStage,
+  getRoundIntegral,
+  addRoundIntegral,
+  copyContentDetail,
+} from '@/utils/api';
 import stage1 from './shuxi/stage1';
+import stage2 from './shuxi/stage2';
+import stage3 from './shuxi/stage3';
 
 const data = reactive<any>({
   taskId: null,
@@ -155,14 +168,38 @@ const handleOk = () => {
 const handleCopyModal = async (r: Four.GetContentDetail.ContentList & Four.GetContentDetail.StatusVo) => {
   const moduleCode = data.moduleCode;
   const taskId = data.taskId;
-  await copyContentDetail({
-    moduleCode,
-    stepDetailId: r.stepDetailId,
-    sign: r.sign,
-    taskId,
-    source: 'lookfor',
-  });
-  await addRoundIntegral({ taskId, integralNum: 1 });
+
+  console.log('[round1] 对方找弹窗中点击复制');
+
+  try {
+    await copyContentDetail({
+      moduleCode,
+      stepDetailId: r.stepDetailId,
+      sign: r.sign,
+      taskId,
+      source: 'lookfor',
+    });
+    await addRoundIntegral({ taskId, integralNum: 1 });
+
+    console.log('[round1] 复制成功，关闭弹窗');
+
+    // 复制成功后关闭弹窗
+    popup.value?.close();
+
+    // 显示成功提示
+    uni.showToast({
+      title: '复制成功',
+      icon: 'success',
+      duration: 1500
+    });
+  } catch (error) {
+    console.error('[round1] 复制失败:', error);
+    uni.showToast({
+      title: '复制失败，请重试',
+      icon: 'none',
+      duration: 2000
+    });
+  }
 };
 
 // 点击复制按钮
@@ -176,127 +213,40 @@ const handleCopy = async (r: Four.GetContentDetail.ContentList & Four.GetContent
     taskId,
     source: (data.pageInfo as any)?.closeContent ? 'leave' : 'content',
   });
+
   // 继续下一个内容
   if (isKeep) {
     getListInfo({ preStepDetailId: r.stepDetailId });
   } else {
-    // 分数+1
-    await addRoundIntegral({ taskId, integralNum: 1 });
-    const gri = await getRoundIntegral(taskId); // 获得当前回合积分
-    const integral = gri?.integral || 0;
-    const roundNum = gri?.roundNum || 0;
-    let round3Score = 0;
+    // 离库结束，根据阶段调用不同的判分逻辑
+    const stageIndex = data.detail?.stageIndex || data.detail?.stageNum || 1;
+    console.log(`离库结束，当前阶段: ${stageIndex}`);
 
-    // 第三回合结束后的分数
-    if (roundNum === 3) {
-      round3Score = integral;
-    }
-
-    if (roundNum > 3) {
-      if ((integral >= 2 && roundNum >= 4) || (round3Score > 0 && (integral !== round3Score || roundNum >= 6))) {
-        if (roundNum >= 6) {
-          // 提示S7
-          getHint(
-            {
-              hintCode: 'xx07',
-              moduleCode,
-              stageNum: 0,
-            },
-            () => {
-              savePoint(
-                {
-                  stepNum: 1,
-                  stepType: 'familiar_1_stage_cd',
-                  taskId,
-                },
-                async () => {
-                  stage1(taskId);
-                }
-              );
-            },
-            {
-              showCancel: true,
-              cancelCb: () => {
-                // 提示S8
-                getHint(
-                  {
-                    hintCode: 'xx08',
-                    moduleCode,
-                    stageNum: 0,
-                  },
-                  () => {
-                    // 提示S9
-                    getHint({
-                      hintCode: 'xx09',
-                      moduleCode,
-                      stageNum: 0,
-                    });
-                  }
-                );
-              },
-            }
-          );
-        } else {
-          // 走第一阶段CD
-          savePoint({
-            stepNum: 0,
-            stepType: 'familiar_1_stage_cd',
-            taskId,
-          });
-        }
-      } else {
-        if (integral == round3Score && roundNum < 6) {
-          // 提示S6
-          getHint(
-            {
-              hintCode: 'xx06',
-              moduleCode,
-              stageNum: 0,
-            },
-            () => {
-              // 走第二个大CD
-              savePoint(
-                {
-                  stepNum: 1,
-                  stepType: 'familiar_1_cd2',
-                  taskId,
-                },
-                () => {
-                  data.stepSign = 'lookfor';
-                  init(taskId); // 重新获取任务详情
-                }
-              );
-            }
-          );
-        } else {
-          // 走第二个大CD
-          savePoint(
-            {
-              stepNum: 0,
-              stepType: 'familiar_1_cd2',
-              taskId,
-            },
-            () => {
-              data.stepSign = 'lookfor';
-              init(taskId); // 重新获取任务详情
-            }
-          );
-        }
-      }
+    let result;
+    if (stageIndex === 1) {
+      // 第一阶段判分逻辑
+      result = await stage1(taskId);
+    } else if (stageIndex === 2) {
+      // 第二阶段判分逻辑
+      result = await stage2(taskId);
+    } else if (stageIndex === 3) {
+      // 第三阶段判分逻辑
+      result = await stage3(taskId);
     } else {
-      // 走第一个大CD
-      savePoint(
-        {
-          stepNum: 0,
-          stepType: 'familiar_1_cd',
-          taskId,
-        },
-        () => {
-          data.stepSign = 'lookfor';
-          init(taskId); // 重新获取任务详情
-        }
-      );
+      // 其他阶段（待实现）
+      console.warn(`阶段 ${stageIndex} 的判分逻辑尚未实现`);
     }
+
+    // 更新任务详情
+    if (result?.detail) {
+      data.detail = result.detail;
+    }
+
+    // 设置对方找状态
+    data.stepSign = 'lookfor';
+
+    // 重新获取任务详情和内容列表
+    await init(taskId);
   }
 };
 
@@ -337,7 +287,15 @@ const getListInfo = async (props?: Partial<{ warehouseName: string; preStepDetai
 
 // 对方主动找处理逻辑
 const lookfor = async (props: { isStage?: boolean; warehouseName?: string; notRound?: boolean }) => {
+  // 保存原来的倒计时时间，避免在获取对方找内容时丢失
+  const originalEndTime = data.detail?.endTime;
+
   await getListInfo({ warehouseName: props?.warehouseName });
+
+  // 恢复原来的倒计时时间
+  if (originalEndTime) {
+    data.detail = { ...data.detail, endTime: originalEndTime };
+  }
 
   // 打开对方找弹窗
   popup.value!.open();

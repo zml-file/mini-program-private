@@ -21,7 +21,12 @@
         </y-tab>
       </y-tabs>
     </view>
-    <bc-bottom-bar showRecharge rightBtn @ok="hanldeSubmit" @back="handleBack" />
+    <bc-bottom-bar
+      showRecharge
+      rightBtn
+      rechargeUrl="/pages/task-purchase/index?from=questionnaire&module=熟悉模块"
+      @ok="hanldeSubmit"
+      @back="handleBack" />
     <!-- 提示弹窗 -->
     <md-dialog ref="popup" @ok="handleOk">
       <view v-if="modelType === 'submit'">您已完成了所有问卷内容的填写，请确认是否提交</view>

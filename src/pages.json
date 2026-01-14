@@ -27,6 +27,10 @@
     {
       "path": "pages/recharge/index",
       "title": "会员充值"
+    },
+    {
+      "path": "pages/task-purchase/index",
+      "title": "任务购买"
     }
   ],
   "subPackages": [

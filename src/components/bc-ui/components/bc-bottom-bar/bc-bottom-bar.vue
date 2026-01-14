@@ -19,11 +19,16 @@ import { getCountdown } from '@/utils/util';
 
 const data = reactive({});
 
-defineProps({
+const props = defineProps({
   // 显示充值
   showRecharge: {
     type: Boolean,
     default: false,
+  },
+  // 充值跳转URL（自定义充值页面路径）
+  rechargeUrl: {
+    type: String,
+    default: '/pages/recharge/index',
   },
   // 显示倒计时
   showCountdown: {
@@ -70,9 +75,9 @@ defineProps({
 
 // 充值
 const handleRecharge = () => {
-  // console.log('跳转充值页面');
+  console.log('[bc-bottom-bar] 跳转充值页面:', props.rechargeUrl);
   uni.navigateTo({
-    url: '/pages/recharge/index',
+    url: props.rechargeUrl,
   });
 };
 

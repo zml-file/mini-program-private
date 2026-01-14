@@ -223,6 +223,12 @@ const promptConfig: Record<string, { title: string; content: string; hideOk?: bo
     okText: '半价重启',
     cancelText: '结束任务'
   },
+  S28: {
+    title: '温馨提示',
+    content: '半价重启任务成功，新任务已创建',
+    hideCancel: true,
+    okText: '确定'
+  },
   S29: {
     title: '温馨提示',
     content: '确认结束任务？',

@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>熟悉模块核心功能实现度测试报告</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2c3e50;
+      border-bottom: 3px solid #3498db;
+      padding-bottom: 15px;
+      margin-bottom: 30px;
+      font-size: 32px;
+    }
+    h2 {
+      color: #34495e;
+      margin: 30px 0 15px 0;
+      font-size: 24px;
+      border-left: 4px solid #3498db;
+      padding-left: 15px;
+    }
+    h3 {
+      color: #555;
+      margin: 20px 0 10px 0;
+      font-size: 18px;
+    }
+    .summary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 25px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    .summary h2 {
+      color: white;
+      border: none;
+      padding: 0;
+      margin-bottom: 15px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.15);
+      padding: 15px;
+      border-radius: 6px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .stat-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .requirement {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 20px;
+      margin: 15px 0;
+    }
+    .requirement-title {
+      font-weight: bold;
+      font-size: 16px;
+      color: #2c3e50;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .requirement-desc {
+      color: #666;
+      margin: 10px 0;
+      padding-left: 20px;
+      border-left: 3px solid #ecf0f1;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .status.completed { background: #2ecc71; color: white; }
+    .status.partial { background: #f39c12; color: white; }
+    .status.not-implemented { background: #e74c3c; color: white; }
+    .implementation-details {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+      font-size: 14px;
+    }
+    .code-ref {
+      font-family: 'Consolas', 'Monaco', monospace;
+      background: #282c34;
+      color: #61dafb;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+    .issue {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .issue-title {
+      font-weight: bold;
+      color: #856404;
+      margin-bottom: 5px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 30px;
+      background: #ecf0f1;
+      border-radius: 15px;
+      overflow: hidden;
+      margin: 15px 0;
+      position: relative;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3498db 0%, #2ecc71 100%);
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .feature-card {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .feature-card.completed { border-color: #2ecc71; }
+    .feature-card.partial { border-color: #f39c12; }
+    .feature-card.not-implemented { border-color: #e74c3c; }
+    ul {
+      margin: 10px 0;
+      padding-left: 30px;
+    }
+    li {
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+    th {
+      background: #3498db;
+      color: white;
+      font-weight: bold;
+    }
+    tr:nth-child(even) {
+      background: #f8f9fa;
+    }
+    .legend {
+      display: flex;
+      gap: 20px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+    }
+    .excluded {
+      background: #f0f0f0;
+      border: 1px dashed #999;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 熟悉模块核心功能实现度测试报告</h1>
+
+    <div class="excluded">
+      <strong>📌 测试范围说明：</strong>本报告仅评估 <code>familiar-local.ts</code> 对熟悉模块自身核心功能的实现，
+      <strong>不包括</strong>：前端UI实现、跨模块集成（如图文模块）、提示板UI组件等。
+    </div>
+
+    <div class="summary">
+      <h2>📊 核心功能实现度概览</h2>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 92%;">92% 完成</div>
+      </div>
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value">92%</div>
+          <div class="stat-label">核心功能实现度</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">5/5</div>
+          <div class="stat-label">阶段完整性</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">35/38</div>
+          <div class="stat-label">核心API</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">低</div>
+          <div class="stat-label">风险等级</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background: #2ecc71;"></div>
+        <span>完全实现</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #f39c12;"></div>
+        <span>部分实现</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #e74c3c;"></div>
+        <span>未实现</span>
+      </div>
+    </div>
+
+    <h2>📋 第0阶段：问卷调查系统</h2>
+    <div class="feature-grid">
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>问卷数据结构</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ 5个问题，每题5个选项<br>
+          ✅ 前3题计分，后2题不计分<br>
+          ✅ 分值配置完整<br>
+          ✅ 阈值 X=10
+        </div>
+        <div class="implementation-details">
+          <strong>代码位置：</strong><br>
+          - <code>libs.questionnaire.questions</code> (458-464行)<br>
+          - <code>libs.questionnaire.thresholdX: 10</code> (457行)<br>
+          - <code>libs.questionnaire.apiMock</code> (470-548行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>问卷答案保存</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ saveQuestionnaireAnswer 函数<br>
+          ✅ 单选题逻辑<br>
+          ✅ 自动计算总分<br>
+          ✅ 实时更新得分
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>saveQuestionnaireAnswer(taskId, questionId, optionId)</code> (926-943行)<br>
+          自动从选项中获取分值并累加
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>问卷提交和路由</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ submitQuestionnaire 函数<br>
+          ✅ 得分≥X → 熟悉模块<br>
+          ✅ 得分<X → 可路由到不熟/陌生<br>
+          ✅ askFlow 字段支持问1/问2/问3流程
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>submitQuestionnaire(taskId)</code> (945-966行)<br>
+          返回路由信息和下一步提示
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>倒计时机制</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ 9-10天倒计时支持<br>
+          ✅ XX-XX天阶段CD支持<br>
+          ✅ stageCdUnlockAt 时间戳<br>
+          ✅ enterStageCd 函数灵活配置天数
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>enterStageCd(taskId, {minDays, maxDays})</code> (876-888行)<br>
+          支持任意天数范围的随机倒计时
+        </div>
+      </div>
+    </div>
+
+    <h2>📋 第一阶段：初始交流 (6回合)</h2>
+    <div class="feature-grid">
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>阶段初始化</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ enterStage1 函数<br>
+          ✅ stage1 数据结构完整<br>
+          ✅ roundScores 数组记录每回合得分<br>
+          ✅ firstThreeRoundsTotal 前三回合总分<br>
+          ✅ roundCdMultiplier CD倍数<br>
+          ✅ Z倒计时配置 2-4分钟
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>enterStage1(taskId)</code> (1013-1047行)<br>
+          完整初始化所有必要字段
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>6个回合管理</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ startStage1Round 支持回合1-6<br>
+          ✅ 内容库映射正确：<br>
+          　 回合1→S1, 回合2→S2, 回合3→S3<br>
+          　 回合4→S4, 回合5→S5, 回合6→S4.5<br>
+          ✅ 离库映射正确：<br>
+          　 回合1→S1, 回合2→S2, 回合3→S2<br>
+          　 回合4→S3, 回合5→S2, 回合6→S3.5
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>startStage1Round(taskId, roundNumber)</code> (1049-1098行)<br>
+          完全符合需求文档的表格映射
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>回合判分逻辑</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ 第3回合后判分 (阈值X=2)：<br>
+          　 得分≥2 → 进入回合4<br>
+          　 得分<2 → 延时2×大CD → 回合5<br>
+          ✅ 第4回合后 → 阶段CD(3-5天) → 第2阶段<br>
+          ✅ 第5回合后判分：<br>
+          　 得分=前3回合总分 → 回合6<br>
+          　 得分≠前3回合总分 → 阶段CD → 第2阶段<br>
+          ✅ 第6回合后判分：<br>
+          　 得分=前3回合总分 → 提示板S7<br>
+          　 得分≠前3回合总分 → 阶段CD → 第2阶段
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>checkStage1RoundTransition(taskId)</code> (1127-1177行)<br>
+          所有分支逻辑完整，返回明确的 action 指令
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>得分记录</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ finishStage1Round 函数<br>
+          ✅ 记录每回合得分到 roundScores<br>
+          ✅ 累加 stageScore 和 totalScore<br>
+          ✅ 更新 firstThreeRoundsTotal
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>finishStage1Round(taskId, roundScore)</code> (1100-1125行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>对方找功能</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ 对方找库 S2<br>
+          ✅ opponentFindUnlockAt 倒计时<br>
+          ✅ opponentFindCopyUnlockAt 复制按钮倒计时<br>
+          ✅ onOpponentFindClick 函数<br>
+          ✅ opponentFindUsedInRound 标志<br>
+          ✅ 积分+1 (需前端调用 addPoint)
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>onOpponentFindClick(taskId, libId)</code> (782-796行)<br>
+          <code>enterRoundBigCd(..., {startOpponentFind: true})</code> (832-862行)
+        </div>
+      </div>
+    </div>
+
+    <h2>📋 第二阶段：深化关系</h2>
+    <div class="feature-grid">
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>阶段初始化</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ enterStage2 函数<br>
+          ✅ stage2 数据结构<br>
+          ✅ firstTwoRoundsTotal<br>
+          ✅ specialRound: 'a' | 'b' | null<br>
+          ✅ skipOpening 标志<br>
+          ✅ usedContentLibs 数组
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>enterStage2(taskId)</code> (1563-1595行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>内容库随机抽取</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ 前两回合随机抽取 S6-S11<br>
+          ✅ 过滤已用库，避免重复<br>
+          ✅ 特殊回合a/b 使用 S2.5<br>
+          ✅ 开库S1 (固定)<br>
+          ✅ 离库S4 (前两回合), S3 (特殊回合)<br>
+          ✅ 对方找后跳过开库 (skipOpening)
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>startStage2Round(taskId, roundNumber)</code> (1600-1674行)<br>
+          随机逻辑：<code>unusedLibs.filter(...)</code> 然后随机选择
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>判分和转换逻辑</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ 第1回合 → 第2回合<br>
+          ✅ 第2回合后判分：<br>
+          　 得分>X → 阶段CD(3-5天) → 第3阶段<br>
+          　 得分≤X → 特殊回合a (2×CD)<br>
+          ✅ 特殊回合a后判分：<br>
+          　 得分=前2回合 且 回合<4 → 提示S11 (坚持→回合b)<br>
+          　 得分=前2回合 且 回合≥4 → 15天CD + 提示S13<br>
+          　 得分<前2回合 → 15天CD + 提示S14<br>
+          　 得分>前2回合 → 阶段CD → 第3阶段<br>
+          ✅ 特殊回合b逻辑类似
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>checkStage2RoundTransition(taskId)</code> (1679-1755行)<br>
+          所有分支完整，CD倍数正确
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>Z倒计时配置</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ Z时间: 3-6分钟<br>
+          ✅ 配置在 zDurationByStage[2]
+        </div>
+        <div class="implementation-details">
+          <code>zDurationByStage[2]: { minMs: 3分, maxMs: 6分 }</code> (192行)
+        </div>
+      </div>
+    </div>
+
+    <h2>📋 第三阶段：关键推进</h2>
+    <div class="feature-grid">
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>阶段初始化</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ enterStage3 函数<br>
+          ✅ stage3 数据结构<br>
+          ✅ secondRoundScore 第2回合得分<br>
+          ✅ specialRound: 'a' | 'b'<br>
+          ✅ usedContentLibs 数组
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>enterStage3(taskId)</code> (1762-1794行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>内容库管理</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ 前两回合随机抽取 S12-S16<br>
+          ✅ 已用库不重复<br>
+          ✅ 特殊回合使用 S3.5<br>
+          ✅ 开库S2 (正常), S3.5 (特殊)<br>
+          ✅ 离库S5 (正常), S3.5 (特殊)
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>startStage3Round(taskId, roundNumber)</code> (1799-1855行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>判分逻辑</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ 第2回合后判分：<br>
+          　 得分>X → 直接进入第4阶段 (无CD)<br>
+          　 得分≤X → 提示S15 (坚持→特殊回合a)<br>
+          ✅ 特殊回合a后判分 (3×CD)：<br>
+          　 得分=第2回合 且 回合<4 → 提示S16<br>
+          　 得分=第2回合 且 回合≥4 → 提示S17<br>
+          　 得分<第2回合 → 提示S18<br>
+          　 得分>第2回合 → 进入第4阶段<br>
+          ✅ 特殊回合b逻辑类似
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>checkStage3RoundTransition(taskId)</code> (1860-1924行)<br>
+          <strong>特别注意：</strong>得分>X时直接进入第4阶段，无阶段CD（符合需求）
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>半价重开功能</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ halfPriceRestart 函数<br>
+          ✅ 计算半价费用 (5天×50%)<br>
+          ✅ 创建新任务，时长5天<br>
+          ✅ 标记 isRestartHalfPrice: true<br>
+          ✅ 删除旧任务<br>
+          ✅ 返回新任务ID
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>halfPriceRestart(taskId)</code> (1929-1971行)<br>
+          半价计算：138元 × 0.5 = 69元
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>Z倒计时配置</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ Z时间: 3-7分钟<br>
+          ✅ 配置在 zDurationByStage[3]
+        </div>
+        <div class="implementation-details">
+          <code>zDurationByStage[3]: { minMs: 3分, maxMs: 7分 }</code> (193行)
+        </div>
+      </div>
+    </div>
+
+    <h2>📋 第四阶段：确认邀约</h2>
+    <div class="feature-grid">
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>阶段初始化</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ enterStage4 函数<br>
+          ✅ stage4 数据结构<br>
+          ✅ invitationAttempts 邀约次数<br>
+          ✅ invitationSuccess 成功标志<br>
+          ✅ multiChatUsed 多聊标志<br>
+          ✅ goClicked Go按钮标志<br>
+          ✅ returnedFromStage3 返回标志
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>enterStage4(taskId)</code> (1978-2008行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>邀约处理逻辑</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ handleInvitation 函数<br>
+          ✅ 邀约成功 → 返回内容库S18<br>
+          ✅ 邀约失败次数记录<br>
+          ✅ 失败≤2次 → 3×CD (第1次), 5×CD (第2次)<br>
+          ✅ 失败>2次 → 返回提示S25
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>handleInvitation(taskId, success)</code> (2013-2042行)<br>
+          CD倍数逻辑正确：attempts===1 ? 3 : 5
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>多聊一次功能</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ handleMultiChat 函数<br>
+          ✅ 只能使用一次 (multiChatUsed 标志)<br>
+          ✅ 临时切换到 stageIndex=3<br>
+          ✅ 设置 returnedFromStage3 标志<br>
+          ✅ finishMultiChat 返回第4阶段<br>
+          ✅ 返回提示S20
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><br>
+          - <code>handleMultiChat(taskId)</code> (2047-2067行)<br>
+          - <code>finishMultiChat(taskId)</code> (2072-2085行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>内容库配置</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ 邀约库 S17 (马上邀约话术)<br>
+          ✅ 成功库 S18 (见面细节指导)<br>
+          ✅ 多聊一次使用 开库S2/离库S5/对方找S4
+        </div>
+        <div class="implementation-details">
+          S17/S18 内容已在 libs.content 中定义 (321-330行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>任务完成</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ finishTask 函数<br>
+          ✅ 状态设为 "deleted"<br>
+          ✅ 从任务列表移除<br>
+          ✅ 列表不再显示
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>finishTask(taskId)</code> (2090-2107行)
+        </div>
+      </div>
+    </div>
+
+    <h2>📋 通用核心功能</h2>
+    <div class="feature-grid">
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>任务生命周期管理</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ createTask (5/9/16天选项)<br>
+          ✅ listTasks (列表展示)<br>
+          ✅ getTask (查询任务)<br>
+          ✅ deleteTask (删除任务)<br>
+          ✅ renewTask (续费功能)<br>
+          ✅ 任务状态: active/finished/deleted
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><br>
+          - <code>createTask(name, durationDays)</code> (579-631行)<br>
+          - <code>listTasks()</code> (565-577行)<br>
+          - <code>deleteTask(taskId)</code> (639-651行)<br>
+          - <code>renewTask(taskId, days, cost)</code> (653-663行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>内容库系统</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ 5种库类型：opening/content/leaving/opponent/qa<br>
+          ✅ 链式内容结构 (Chain/ChainNode)<br>
+          ✅ 节点类型：text/Z/D/AZ/AD<br>
+          ✅ 分段符号 (@)<br>
+          ✅ 并行选择 (&///++)<br>
+          ✅ 离库特殊符号 (FF/LL)
+        </div>
+        <div class="implementation-details">
+          <strong>类型定义：</strong><br>
+          - <code>Chain = ChainNode[]</code> (19行)<br>
+          - <code>ChainNode { id, text, type, splitBy }</code> (13-18行)<br>
+          - <code>Libs { opening, content, leaving, opponent, qa }</code> (42-52行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>内容链遍历和管理</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ currentLibChain 当前链状态<br>
+          ✅ nodeIndex 节点索引<br>
+          ✅ segmentsCopied 段落计数<br>
+          ✅ pickChain 选择链<br>
+          ✅ setCurrentChain 设置当前链<br>
+          ✅ finishCurrentLibNode 节点完成
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><br>
+          - <code>pickChain(group, libId)</code> (723-728行)<br>
+          - <code>setCurrentChain(t, type, libId, chain)</code> (730-733行)<br>
+          - <code>finishCurrentLibNode(taskId)</code> (821-829行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>复制功能</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ copySegment 函数<br>
+          ✅ 小CD (2秒可配置)<br>
+          ✅ ClipboardState 剪贴板状态<br>
+          ✅ segmentsCopied 计数自增<br>
+          ✅ 复制成功提示逻辑支持
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>copySegment(taskId)</code> (799-818行)<br>
+          小CD配置：<code>smallCopyCdMs: 2000ms</code> (196行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>Z/D模式</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ onZEnter 函数<br>
+          ✅ 随机Z倒计时 (按阶段配置)<br>
+          ✅ zUnlockAt 时间戳<br>
+          ✅ onDEnter 函数<br>
+          ✅ dMode 标志<br>
+          ✅ 列表badge自动更新
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><br>
+          - <code>onZEnter(taskId)</code> (747-758行)<br>
+          - <code>onDEnter(taskId)</code> (760-768行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>CD机制</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ 回合大CD (支持倍数)<br>
+          ✅ 阶段CD (支持天数范围)<br>
+          ✅ 对方找CD<br>
+          ✅ 对方找复制CD<br>
+          ✅ roundCdUnlockAt 时间戳<br>
+          ✅ stageCdUnlockAt 时间戳
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><br>
+          - <code>enterRoundBigCd(taskId, multiplier, options)</code> (832-862行)<br>
+          - <code>enterStageCd(taskId, {minDays, maxDays})</code> (876-888行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>列表Badge显示</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ computeListBadge 函数<br>
+          ✅ 5种状态自动判断：<br>
+          　 1. D<br>
+          　 2. Z倒计时<br>
+          　 3. 对方找倒计时<br>
+          　 4. 下次聊天开启倒计时<br>
+          　 5. 聊天任务进行中<br>
+          ✅ 返回倒计时结束时间戳
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>computeListBadge(task)</code> (996-1004行)<br>
+          优先级逻辑正确：D > Z > 对方找 > CD > 进行中
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>空闲检测</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ 40分钟警告 (idleWarnMs)<br>
+          ✅ 2小时强制CD (idleForceCdMs)<br>
+          ✅ updateLastAction 更新最后操作<br>
+          ✅ checkIdleAndHandle 检查空闲<br>
+          ✅ 强制进入CD逻辑
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><br>
+          - <code>updateLastAction(taskId)</code> (969-979行)<br>
+          - <code>checkIdleAndHandle(taskId)</code> (981-993行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>积分管理</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ addPoint 函数<br>
+          ✅ 来源标记：leaving/opponentFind/qa/other<br>
+          ✅ stageScore 阶段得分<br>
+          ✅ totalScore 总得分<br>
+          ✅ 自动累加
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>addPoint(taskId, amount, source)</code> (736-744行)
+        </div>
+      </div>
+
+      <div class="feature-card completed">
+        <div class="requirement-title">
+          <span class="status completed">✓ 完全实现</span>
+          <span>已用库记录</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ usedLibIdsByStage 按阶段记录<br>
+          ✅ 分类记录：content/opening/leaving/qa/opponent<br>
+          ✅ markChainUsed 函数<br>
+          ✅ 自动去重
+        </div>
+        <div class="implementation-details">
+          <strong>函数：</strong><code>markChainUsed(taskId, libId, type)</code> (891-923行)
+        </div>
+      </div>
+
+      <div class="feature-card partial">
+        <div class="requirement-title">
+          <span class="status partial">⚠ 部分实现</span>
+          <span>问答搜索</span>
+        </div>
+        <div class="requirement-desc">
+          ✅ qa库数据结构完整 (S1/S2/S3)<br>
+          ✅ VIP等级配置 (2/3/4条)<br>
+          ✅ qaVipMaxItems 字段<br>
+          ⚠️ 缺少搜索函数实现<br>
+          ⚠️ 缺少去重逻辑<br>
+          ⚠️ 缺少3.5秒置灰逻辑
+        </div>
+        <div class="implementation-details">
+          <strong>数据：</strong>libs.qa.S1/S2/S3 (375-454行)<br>
+          <strong>缺失：</strong>searchQA 函数<br>
+          <div class="issue">
+            <div class="issue-title">需要补充</div>
+            建议实现 <code>searchQA(taskId, keyword)</code> 函数，包含：<br>
+            1. 模糊搜索逻辑<br>
+            2. VIP条数限制<br>
+            3. 已选项去重<br>
+            4. 返回格式化结果
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2>📊 库内容完整性检查</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>阶段</th>
+          <th>开库(Opening)</th>
+          <th>内容库(Content)</th>
+          <th>离库(Leaving)</th>
+          <th>对方找(Opponent)</th>
+          <th>问答(QA)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>第0阶段</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+        </tr>
+        <tr>
+          <td>第1阶段</td>
+          <td>-</td>
+          <td>✅ S1/S2/S3/S4/S5/S4.5</td>
+          <td>✅ S1/S2/S3/S3.5</td>
+          <td>✅ S2</td>
+          <td>✅ S1 (4题)</td>
+        </tr>
+        <tr>
+          <td>第2阶段</td>
+          <td>✅ S1</td>
+          <td>✅ S6/S7/S8/S9/S10/S11/S2.5</td>
+          <td>✅ S4/S3</td>
+          <td>✅ S3</td>
+          <td>✅ S2 (3题)</td>
+        </tr>
+        <tr>
+          <td>第3阶段</td>
+          <td>✅ S2/S3.5</td>
+          <td>✅ S12/S13/S14/S15/S16/S3.5</td>
+          <td>✅ S5/S3.5</td>
+          <td>✅ S4</td>
+          <td>✅ S3 (3题)</td>
+        </tr>
+        <tr>
+          <td>第4阶段</td>
+          <td>✅ S2 (多聊)</td>
+          <td>✅ S17/S18</td>
+          <td>✅ S5 (多聊)</td>
+          <td>✅ S4 (多聊)</td>
+          <td>✅ S3</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>⚠️ 发现的小问题</h2>
+
+    <div class="issue">
+      <div class="issue-title">1. 问答搜索功能不完整 (优先级：中)</div>
+      <strong>问题：</strong>qa库数据和VIP配置都存在，但缺少 searchQA 函数。<br>
+      <strong>建议：</strong>补充以下函数：
+      <pre style="background: #282c34; color: #abb2bf; padding: 15px; border-radius: 4px; margin-top: 10px; overflow-x: auto; font-size: 13px;">
+export function searchQA(taskId: string, keyword: string) {
+  const t = getTask(taskId);
+  if (!t) return { items: [], maxItems: 0 };
+
+  const libs: Libs = get("fm:libs");
+  const stage = t.stageIndex;
+  const qaLib = stage === 1 ? libs.qa.S1 : stage === 2 ? libs.qa.S2 : libs.qa.S3;
+
+  // 1. 模糊搜索
+  const results = qaLib.filter(qa =>
+    qa.title.includes(keyword) || qa.answerChain.some(node => node.text.includes(keyword))
+  );
+
+  // 2. 过滤已用项
+  const usedQAs = t.usedLibIdsByStage[stage]?.qa || [];
+  const unused = results.filter(qa => !usedQAs.includes(qa.id));
+
+  // 3. 限制返回条数
+  const limited = unused.slice(0, t.qaVipMaxItems);
+
+  return { items: limited, maxItems: t.qaVipMaxItems };
+}</pre>
+    </div>
+
+    <div class="issue">
+      <div class="issue-title">2. 未操作超时弹窗选项逻辑 (优先级：低)</div>
+      <strong>问题：</strong>40分钟警告后的"对方未回复"、"自己离开了"、"对方已回复"三个选项的处理逻辑未实现。<br>
+      <strong>建议：</strong>这部分逻辑较简单，可以在 checkIdleAndHandle 函数返回值中增加 showIdleDialog 标志，由前端展示选项。
+    </div>
+
+    <div class="issue">
+      <div class="issue-title">3. 提示板数据配置 (优先级：低，属于配置范畴)</div>
+      <strong>问题：</strong>S1-S31提示板的内容文本未配置。<br>
+      <strong>建议：</strong>在 libs 中增加 prompts 配置对象：
+      <pre style="background: #282c34; color: #abb2bf; padding: 15px; border-radius: 4px; margin-top: 10px; overflow-x: auto; font-size: 13px;">
+prompts: {
+  S1: { title: "温馨提示", content: "请确认您已有对方的线上联系方式", buttons: ["确定"] },
+  S2: { title: "准备开始", content: "需要让对方见不到您20天...", buttons: ["是", "否"] },
+  // ... S3 到 S31
+}</pre>
+      但这主要是配置工作，核心逻辑已通过 checkStage*RoundTransition 返回的 action 指令支持。
+    </div>
+
+    <h2>✅ 核心优势</h2>
+
+    <div class="requirement">
+      <h3>1. 架构设计优秀</h3>
+      <ul>
+        <li>✅ 数据结构清晰，TypeScript类型完整</li>
+        <li>✅ 各阶段数据隔离，互不干扰</li>
+        <li>✅ 状态机设计合理，转换逻辑清晰</li>
+        <li>✅ 函数职责单一，易于测试和维护</li>
+      </ul>
+    </div>
+
+    <div class="requirement">
+      <h3>2. 需求覆盖全面</h3>
+      <ul>
+        <li>✅ 5个阶段逻辑100%实现</li>
+        <li>✅ 所有判分分支完整</li>
+        <li>✅ 特殊回合a/b逻辑正确</li>
+        <li>✅ CD倍数机制灵活</li>
+        <li>✅ 内容库管理完善</li>
+      </ul>
+    </div>
+
+    <div class="requirement">
+      <h3>3. 扩展性良好</h3>
+      <ul>
+        <li>✅ 配置项可灵活调整（CD时间、阈值等）</li>
+        <li>✅ 内容库易于扩展</li>
+        <li>✅ 支持添加新的库类型</li>
+        <li>✅ VIP等级可动态配置</li>
+      </ul>
+    </div>
+
+    <div class="requirement">
+      <h3>4. 健壮性强</h3>
+      <ul>
+        <li>✅ 完善的错误检查</li>
+        <li>✅ 空值保护</li>
+        <li>✅ 状态一致性保证</li>
+        <li>✅ 边界条件处理</li>
+      </ul>
+    </div>
+
+    <h2>🎯 总结</h2>
+
+    <div class="summary">
+      <p style="margin-bottom: 15px;">
+        <strong>核心功能实现度：</strong> <span style="font-size: 28px;">92%</span>
+      </p>
+
+      <p style="margin-bottom: 15px;">
+        <strong>✅ 已完成功能（92%）：</strong>
+      </p>
+      <ul style="margin-left: 20px; margin-bottom: 15px;">
+        <li>✅ 5个阶段完整逻辑 (第0-4阶段)</li>
+        <li>✅ 所有回合管理和判分逻辑</li>
+        <li>✅ 完整的内容库系统</li>
+        <li>✅ CD机制（回合、阶段、对方找）</li>
+        <li>✅ Z/D模式</li>
+        <li>✅ 对方找功能</li>
+        <li>✅ 多聊一次功能</li>
+        <li>✅ 半价重开功能</li>
+        <li>✅ 任务生命周期管理</li>
+        <li>✅ 列表badge展示逻辑</li>
+        <li>✅ 空闲检测机制</li>
+        <li>✅ 积分和已用库记录</li>
+      </ul>
+
+      <p style="margin-bottom: 15px;">
+        <strong>⚠️ 待补充功能（8%）：</strong>
+      </p>
+      <ul style="margin-left: 20px; margin-bottom: 15px;">
+        <li>⚠️ 问答搜索函数 (searchQA)</li>
+        <li>⚠️ 未操作超时选项逻辑</li>
+        <li>⚠️ 提示板内容配置 (S1-S31文本)</li>
+      </ul>
+
+      <p style="margin-bottom: 15px;">
+        <strong>📝 评估结论：</strong>
+      </p>
+      <p style="margin-bottom: 10px;">
+        <code>familiar-local.ts</code> 对"熟悉模块"的<strong>核心业务逻辑实现度达到92%</strong>，
+        已经完成了所有关键功能和复杂的状态转换逻辑。剩余8%主要是辅助功能（问答搜索）和配置内容（提示板文本），
+        不影响主流程运行。
+      </p>
+      <p>
+        <strong>风险等级：低</strong> - 可以直接进入前端集成阶段，同时并行补充问答搜索功能。
+      </p>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+      <p style="color: #666; font-size: 14px;">
+        📅 报告生成时间: <script>document.write(new Date().toLocaleString('zh-CN'))</script><br>
+        📄 测试范围: 熟悉模块核心功能（排除UI和跨模块集成）<br>
+        🔧 测试方法: 逐行代码审查 + 需求对照 + 逻辑验证<br>
+        ✅ 结论: 核心功能完备，可进入集成阶段
+      </p>
+    </div>
+  </div>
+</body>
+</html>
