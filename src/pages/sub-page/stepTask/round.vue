@@ -2422,7 +2422,8 @@ const _round = async (r?: { taskId?: number }) => {
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     };
 
-    const endTimeTimestamp = localTask.roundCdUnlockAt || localTask.stageCdUnlockAt || null;
+    // 修复：对方找CD优先级应该高于回合CD，确保对方找复制后能正确显示倒计时
+    const endTimeTimestamp = localTask.opponentFindCdUnlockAt || localTask.roundCdUnlockAt || localTask.stageCdUnlockAt || null;
     const endTimeStr = formatTime(endTimeTimestamp as number | null);
     const otherFindEndTimeStr = formatTime(localTask.opponentFindUnlockAt as number | null);
 
@@ -3238,7 +3239,8 @@ onLoad(async options => {
       const d = new Date(ts as number);
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     };
-    const endTs = (t.zUnlockAt as number) || (t.roundCdUnlockAt as number) || (t.stageCdUnlockAt as number) || (t.opponentFindCdUnlockAt as number) || null;
+    // 修复：统一倒计时优先级顺序 Z > 对方找CD > 回合CD > 阶段CD
+    const endTs = (t.zUnlockAt as number) || (t.opponentFindCdUnlockAt as number) || (t.roundCdUnlockAt as number) || (t.stageCdUnlockAt as number) || null;
 
     data.detail = {
       taskName: t.name,
