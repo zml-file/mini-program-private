@@ -38,5 +38,7 @@ export const FOUR = {
     request<Four.SaveTempTime.Data>('/api/timeConfig/saveTempTime', 'POST', data),
   // 复制内容
   copyContentDetail: (data: Partial<Four.CopyContentDetail.Body>) => request<Four.CopyContentDetail.Data>('/api/fourModule/copyContentDetail', 'POST', data),
+  // 获取所有内容库列表
+  getAllContent: () => request<Four.GetAllContent.Data>('/api/fourModule/getAllContent', 'GET'),
 };
 export default FOUR;

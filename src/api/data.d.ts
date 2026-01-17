@@ -424,4 +424,19 @@ export namespace Four {
       isStop: number; // 是否停止，1：停止，0：继续
     }
   }
+
+  // 获取所有内容库列表
+  export namespace GetAllContent {
+    export interface ContentItem {
+      id: number;
+      warehouseId: number;
+      contentCode: string;
+      contentDetail: string;
+      contentType: number;
+      status: number;
+      type: number;
+    }
+
+    export type Data = ContentItem[];
+  }
 }
