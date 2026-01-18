@@ -27,6 +27,8 @@ import api from '@/api/index';
 import DisclaimerModal from '@/components/DisclaimerModal.vue';
 // 免责声明工具
 import { hasUserAgreedDisclaimer, setUserAgreedDisclaimer } from '@/utils/disclaimer';
+// 内容库数据同步工具
+import { syncContentLibrary } from '@/utils/content-library-sync';
 
 const data = reactive<any>({
   userId: null,
@@ -145,6 +147,19 @@ const fetchAuthMobileLogin = async (code: string) => {
     uni.setStorageSync('token', res.data);
     // 返回的页面执行刷新
     uni.setStorageSync('isRefresh', 1);
+
+    // 登录成功后，同步内容库数据
+    try {
+      console.log('[fetchAuthMobileLogin] 开始同步内容库数据...');
+      await syncContentLibrary(true); // true 表示合并模式，不插入重复数据
+      console.log('[fetchAuthMobileLogin] 内容库数据同步成功');
+    } catch (syncError) {
+      // 同步失败不影响登录流程，只记录错误
+      console.error('[fetchAuthMobileLogin] 内容库数据同步失败:', syncError);
+      // 可选：显示提示
+      // uni.showToast({ title: '数据同步失败，请稍后重试', icon: 'none', duration: 2000 });
+    }
+
     // 返回上一页；如果当前是第一个页面（无返回栈），跳转到首页 Tab
     const pages = getCurrentPages();
     if (pages && pages.length > 1) {
