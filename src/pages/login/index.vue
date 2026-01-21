@@ -151,7 +151,7 @@ const fetchAuthMobileLogin = async (code: string) => {
     // 登录成功后，同步内容库数据
     try {
       console.log('[fetchAuthMobileLogin] 开始同步内容库数据...');
-      await syncContentLibrary(true); // true 表示合并模式，不插入重复数据
+      await syncContentLibrary(false); // false 表示替换模式，获取最新数据
       console.log('[fetchAuthMobileLogin] 内容库数据同步成功');
     } catch (syncError) {
       // 同步失败不影响登录流程，只记录错误
