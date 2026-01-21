@@ -4,24 +4,24 @@
  */
 
 import api from '@/api/index';
+import { parseContentLibraryData, ParsedContentLibrary, getLibraryByWarehouseId } from './content-library-parser';
 
-// 内容库数据类型定义
+// 原始接口数据类型定义
 export interface ContentLibraryItem {
   id: number;
   contentCode: string;
   warehouseId: number;
   warehouseName: string;
-  content: string;
-  nextContent?: string;
-  symbol?: string;
-  createTime?: string;
-  updateTime?: string;
+  contentDetail: string;
+  contentType: number;
+  status: number;
+  type: number | null;
   [key: string]: any;
 }
 
-// 本地存储的内容库数据结构
+// 本地存储的内容库数据结构（使用解析后的格式）
 export interface LocalContentLibrary {
-  data: ContentLibraryItem[];
+  data: ParsedContentLibrary;
   lastSyncTime: string;
   version: number;
 }
@@ -32,14 +32,17 @@ const STORAGE_KEY = 'content_library_data';
 /**
  * 从接口获取内容库数据
  */
-export async function fetchContentLibraryData(): Promise<ContentLibraryItem[]> {
+export async function fetchContentLibraryData(): Promise<ParsedContentLibrary> {
   try {
     console.log('[ContentLibrarySync] 开始获取内容库数据...');
     const response = await api.four.getAllContent();
 
     if (response.code === 200 && response.data) {
-      console.log('[ContentLibrarySync] 成功获取内容库数据，共', response.data.length, '条');
-      return response.data;
+      console.log('[ContentLibrarySync] 成功获取内容库数据，共', response.data.length, '条原始数据');
+
+      // 解析数据为目标格式
+      const parsedData = parseContentLibraryData(response.data);
+      return parsedData;
     } else {
       console.error('[ContentLibrarySync] 接口返回错误:', response.message);
       throw new Error(response.message || '获取内容库数据失败');
@@ -87,62 +90,98 @@ export function saveLocalContentLibrary(data: ContentLibraryItem[]): void {
 }
 
 /**
- * 检查数据是否重复
- * 根据 id 和 contentCode 判断
- */
-export function isDuplicate(
-  newItem: ContentLibraryItem,
-  existingData: ContentLibraryItem[]
-): boolean {
-  return existingData.some(
-    item => item.id === newItem.id || item.contentCode === newItem.contentCode
-  );
-}
-
-/**
- * 合并数据，过滤重复项
+ * 合并解析后的内容库数据
  */
 export function mergeContentLibraryData(
-  existingData: ContentLibraryItem[],
-  newData: ContentLibraryItem[]
-): ContentLibraryItem[] {
-  const merged = [...existingData];
-  let addedCount = 0;
-  let skippedCount = 0;
+  existingData: ParsedContentLibrary,
+  newData: ParsedContentLibrary
+): ParsedContentLibrary {
+  const merged: ParsedContentLibrary = {
+    contentLibraries: { ...existingData.contentLibraries },
+    leaveLibraries: { ...existingData.leaveLibraries },
+    proactiveLibraries: { ...existingData.proactiveLibraries },
+    qaLibraries: { ...existingData.qaLibraries },
+  };
 
-  newData.forEach(newItem => {
-    if (!isDuplicate(newItem, merged)) {
-      merged.push(newItem);
-      addedCount++;
+  // 合并内容库
+  for (const [key, lib] of Object.entries(newData.contentLibraries)) {
+    if (existingData.contentLibraries[key]) {
+      // 已存在，合并内容节点
+      merged.contentLibraries[key] = {
+        ...existingData.contentLibraries[key],
+        contents: [...existingData.contentLibraries[key].contents, ...lib.contents],
+      };
     } else {
-      skippedCount++;
+      merged.contentLibraries[key] = lib;
     }
-  });
+  }
 
-  console.log('[ContentLibrarySync] 数据合并完成：新增', addedCount, '条，跳过重复', skippedCount, '条');
+  // 合并离开库
+  for (const [key, lib] of Object.entries(newData.leaveLibraries)) {
+    if (existingData.leaveLibraries[key]) {
+      merged.leaveLibraries[key] = {
+        ...existingData.leaveLibraries[key],
+        contents: [...existingData.leaveLibraries[key].contents, ...lib.contents],
+      };
+    } else {
+      merged.leaveLibraries[key] = lib;
+    }
+  }
+
+  // 合并对方找库
+  for (const [key, lib] of Object.entries(newData.proactiveLibraries)) {
+    if (existingData.proactiveLibraries[key]) {
+      merged.proactiveLibraries[key] = {
+        ...existingData.proactiveLibraries[key],
+        contents: [...existingData.proactiveLibraries[key].contents, ...lib.contents],
+      };
+    } else {
+      merged.proactiveLibraries[key] = lib;
+    }
+  }
+
+  // 合并问答库
+  for (const [key, lib] of Object.entries(newData.qaLibraries)) {
+    if (existingData.qaLibraries[key]) {
+      merged.qaLibraries[key] = {
+        ...existingData.qaLibraries[key],
+        items: [...existingData.qaLibraries[key].items, ...lib.items],
+      };
+    } else {
+      merged.qaLibraries[key] = lib;
+    }
+  }
+
+  const totalLibraries =
+    Object.keys(merged.contentLibraries).length +
+    Object.keys(merged.leaveLibraries).length +
+    Object.keys(merged.proactiveLibraries).length +
+    Object.keys(merged.qaLibraries).length;
+
+  console.log('[ContentLibrarySync] 数据合并完成，总共', totalLibraries, '个库');
   return merged;
 }
 
 /**
  * 同步内容库数据
- * @param merge - 是否合并现有数据（true: 合并去重，false: 完全替换）
+ * @param merge - 是否合并现有数据（true: 合并，false: 完全替换）
  * @returns 同步后的数据
  */
 export async function syncContentLibrary(merge: boolean = true): Promise<LocalContentLibrary> {
   try {
     console.log('[ContentLibrarySync] 开始同步内容库数据...');
 
-    // 1. 获取接口数据
+    // 1. 获取接口数据（已解析）
     const apiData = await fetchContentLibraryData();
 
     // 2. 获取本地数据
     const localData = getLocalContentLibrary();
 
-    let finalData: ContentLibraryItem[];
+    let finalData: ParsedContentLibrary;
 
-    if (merge && localData && localData.data.length > 0) {
-      // 合并模式：将新数据与现有数据合并，去除重复
-      console.log('[ContentLibrarySync] 使用合并模式，现有数据', localData.data.length, '条');
+    if (merge && localData && Object.keys(localData.data).length > 0) {
+      // 合并模式：将新数据与现有数据合并
+      console.log('[ContentLibrarySync] 使用合并模式');
       finalData = mergeContentLibraryData(localData.data, apiData);
     } else {
       // 替换模式：直接使用新数据
@@ -159,7 +198,13 @@ export async function syncContentLibrary(merge: boolean = true): Promise<LocalCo
       version: Date.now(),
     };
 
-    console.log('[ContentLibrarySync] 同步完成，最终数据共', finalData.length, '条');
+    const totalLibraries =
+      Object.keys(finalData.contentLibraries).length +
+      Object.keys(finalData.leaveLibraries).length +
+      Object.keys(finalData.proactiveLibraries).length +
+      Object.keys(finalData.qaLibraries).length;
+
+    console.log('[ContentLibrarySync] 同步完成，总共', totalLibraries, '个库');
     return result;
   } catch (error) {
     console.error('[ContentLibrarySync] 同步失败:', error);
@@ -168,33 +213,30 @@ export async function syncContentLibrary(merge: boolean = true): Promise<LocalCo
 }
 
 /**
- * 根据仓库ID获取内容
+ * 根据仓库ID获取内容库
  */
-export function getContentsByWarehouse(warehouseId: number): ContentLibraryItem[] {
+export function getLibraryByWarehouseId(warehouseId: number): LocalContentLibrary | null {
   const localData = getLocalContentLibrary();
-  if (!localData) return [];
+  if (!localData) return null;
 
-  return localData.data.filter(item => item.warehouseId === warehouseId);
+  return localData;
 }
 
 /**
- * 根据内容编码获取内容详情
+ * 根据仓库ID获取内容库详情
  */
-export function getContentByCode(contentCode: string): ContentLibraryItem | undefined {
+export function getContentLibraryById(warehouseId: number): LocalContentLibrary['data'] | null {
   const localData = getLocalContentLibrary();
-  if (!localData) return undefined;
+  if (!localData) return null;
 
-  return localData.data.find(item => item.contentCode === contentCode);
+  return localData.data;
 }
 
 /**
- * 根据ID获取内容详情
+ * 获取所有内容库数据
  */
-export function getContentById(id: number): ContentLibraryItem | undefined {
-  const localData = getLocalContentLibrary();
-  if (!localData) return undefined;
-
-  return localData.data.find(item => item.id === id);
+export function getAllContentLibraryData(): LocalContentLibrary | null {
+  return getLocalContentLibrary();
 }
 
 /**
@@ -214,8 +256,8 @@ export default {
   getLocalContentLibrary,
   saveLocalContentLibrary,
   syncContentLibrary,
-  getContentsByWarehouse,
-  getContentByCode,
-  getContentById,
+  getLibraryByWarehouseId,
+  getContentLibraryById,
+  getAllContentLibraryData,
   clearLocalContentLibrary,
 };
