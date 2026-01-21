@@ -205,6 +205,64 @@ export async function syncContentLibrary(merge: boolean = true): Promise<LocalCo
       Object.keys(finalData.qaLibraries).length;
 
     console.log('[ContentLibrarySync] 同步完成，总共', totalLibraries, '个库');
+
+    // 打印详细的同步数据
+    console.log('[ContentLibrarySync] ========== 同步数据详情 ==========');
+    console.log('[ContentLibrarySync] 同步时间:', result.lastSyncTime);
+    console.log('[ContentLibrarySync] 数据版本:', result.version);
+
+    // 打印内容库
+    if (Object.keys(finalData.contentLibraries).length > 0) {
+      console.log('[ContentLibrarySync] --- 内容库 ---');
+      for (const [key, lib] of Object.entries(finalData.contentLibraries)) {
+        console.log(`[ContentLibrarySync] 库ID: ${key}, 名称: ${lib.libraryName}, 阶段: ${lib.stage}`);
+        console.log(`[ContentLibrarySync] 内容节点数量: ${lib.contents.length}`);
+        if (lib.contents.length > 0) {
+          lib.contents.forEach((node, index) => {
+            console.log(`[ContentLibrarySync]   [${index}] id: ${node.id}, text: "${node.text.substring(0, 50)}${node.text.length > 50 ? '...' : ''}", symbol: ${node.symbol}, next: ${node.next}`);
+          });
+        }
+      }
+    }
+
+    // 打印离开库
+    if (Object.keys(finalData.leaveLibraries).length > 0) {
+      console.log('[ContentLibrarySync] --- 离开库 ---');
+      for (const [key, lib] of Object.entries(finalData.leaveLibraries)) {
+        console.log(`[ContentLibrarySync] 库ID: ${key}, 名称: ${lib.libraryName}, 阶段: ${lib.stage}`);
+        console.log(`[ContentLibrarySync] 内容节点数量: ${lib.contents.length}`);
+        if (lib.contents.length > 0) {
+          lib.contents.forEach((node, index) => {
+            console.log(`[ContentLibrarySync]   [${index}] id: ${node.id}, text: "${node.text.substring(0, 50)}${node.text.length > 50 ? '...' : ''}", symbol: ${node.symbol}, next: ${node.next}`);
+          });
+        }
+      }
+    }
+
+    // 打印对方找库
+    if (Object.keys(finalData.proactiveLibraries).length > 0) {
+      console.log('[ContentLibrarySync] --- 对方找库 ---');
+      for (const [key, lib] of Object.entries(finalData.proactiveLibraries)) {
+        console.log(`[ContentLibrarySync] 库ID: ${key}, 名称: ${lib.libraryName}, 阶段: ${lib.stage}`);
+        console.log(`[ContentLibrarySync] 内容节点数量: ${lib.contents.length}`);
+        if (lib.contents.length > 0) {
+          lib.contents.forEach((node, index) => {
+            console.log(`[ContentLibrarySync]   [${index}] id: ${node.id}, text: "${node.text.substring(0, 50)}${node.text.length > 50 ? '...' : ''}", symbol: ${node.symbol}, next: ${node.next}`);
+          });
+        }
+      }
+    }
+
+    // 打印问答库
+    if (Object.keys(finalData.qaLibraries).length > 0) {
+      console.log('[ContentLibrarySync] --- 问答库 ---');
+      for (const [key, lib] of Object.entries(finalData.qaLibraries)) {
+        console.log(`[ContentLibrarySync] 库ID: ${key}, 名称: ${lib.libraryName}, 阶段: ${lib.stage}`);
+        console.log(`[ContentLibrarySync] 问答项数量: ${lib.items.length}`);
+      }
+    }
+
+    console.log('[ContentLibrarySync] ========== 数据详情结束 ==========');
     return result;
   } catch (error) {
     console.error('[ContentLibrarySync] 同步失败:', error);
