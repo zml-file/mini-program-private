@@ -57,6 +57,9 @@ export interface Task {
   waitingForPrompt: boolean; // 是否正在等待提示板确认
   promptType: string | null; // 当前提示板类型（如 'friend_added'）
   friendAdded: boolean; // 对方是否已添加好友（用于第一回合）
+  // 标签选择相关
+  availableTagOptions: Array<{ id: string; label: string; type: 'opening' | 'content' | 'leaving' }>; // 当前可选的4个标签选项
+  selectedTagId: string | null; // 用户选择的标签ID
 }
 
 export interface Libs {
@@ -378,6 +381,94 @@ function setCurrentChain(t: Task, type: CurrentLibChain['type'], libId: string, 
   markChainUsedInternal(t, libId, type);
 }
 
+/**
+ * 随机抽取4个标签选项供用户选择
+ * @param taskId 任务ID
+ * @param tagType 标签类型（opening/content/leaving）
+ * @returns 随机抽取的4个标签选项
+ */
+export function getTagOptions(taskId: string, tagType: 'opening' | 'content' | 'leaving'): Array<{ id: string; label: string; type: 'opening' | 'content' | 'leaving' }> {
+  initUmLocal();
+  const t = getTask(taskId);
+  if (!t) return [];
+
+  const libs: Libs = get('um:libs');
+  const group = getChainGroupByType(libs, tagType);
+  const availableIds = Object.keys(group).filter(id => !isTagUsed(t, id, tagType));
+
+  // 随机抽取4个标签（如果可用不足4个，则全部返回）
+  const shuffled = availableIds.sort(() => Math.random() - 0.5);
+  const selectedIds = shuffled.slice(0, 4);
+
+  const options = selectedIds.map(id => ({
+    id,
+    label: getTagLabel(id),
+    type: tagType
+  }));
+
+  console.log('[getTagOptions] 随机抽取的标签选项:', options);
+  return options;
+}
+
+/**
+ * 用户选择标签
+ * @param taskId 任务ID
+ * @param tagId 选择的标签ID
+ */
+export function selectTagOption(taskId: string, tagId: string): { ok: boolean; reason?: string } {
+  initUmLocal();
+  const t = getTask(taskId);
+  if (!t) return { ok: false, reason: '任务不存在' };
+
+  const option = t.availableTagOptions.find(opt => opt.id === tagId);
+  if (!option) return { ok: false, reason: '标签选项不存在' };
+
+  // 设置当前选择的标签
+  t.selectedTagId = tagId;
+
+  // 根据选择的标签初始化当前链
+  const libs: Libs = get('um:libs');
+  const chain = pickChain(getChainGroupByType(libs, option.type), tagId);
+  if (chain) {
+    setCurrentChain(t, option.type, tagId, chain);
+    console.log('[selectTagOption] 用户选择标签:', tagId, 'type:', option.type);
+  } else {
+    console.error('[selectTagOption] 找不到标签链:', tagId);
+    return { ok: false, reason: '标签内容不存在' };
+  }
+
+  t.lastActionAt = Date.now();
+  set(`um:task:${taskId}`, t);
+  return { ok: true };
+}
+
+/**
+ * 检查标签是否已使用过
+ */
+function isTagUsed(t: Task, tagId: string, tagType: 'opening' | 'content' | 'leaving'): boolean {
+  const stage = t.stageIndex;
+  if (!t.usedLibIdsByStage[stage]) return false;
+
+  const usedLibs = t.usedLibIdsByStage[stage];
+  if (tagType === 'opening') {
+    return usedLibs.opening?.includes(tagId) || false;
+  } else if (tagType === 'content') {
+    return usedLibs.content?.includes(tagId) || false;
+  } else if (tagType === 'leaving') {
+    return usedLibs.leaving?.includes(tagId) || false;
+  }
+  return false;
+}
+
+/**
+ * 获取标签的显示名称
+ */
+function getTagLabel(tagId: string): string {
+  // 根据标签ID返回友好的显示名称
+  // 可以根据实际需求定制
+  return tagId;
+}
+
 // Points and progress
 export function addPoint(taskId: string, amount: number) {
   initUmLocal();
@@ -497,11 +588,17 @@ function getChainGroupByType(libs: Libs, type: CurrentLibChain['type']): Record<
   }
 }
 
-export async function getCurrentChainContent(taskId: string): Promise<{ contentList: ChainNode[]; statusVo: { sign: '' | 'Z' | 'D' } }> {
+export async function getCurrentChainContent(taskId: string): Promise<{ contentList: ChainNode[]; statusVo: { sign: '' | 'Z' | 'D' | 'TAG_SELECT' } }> {
   initUmLocal();
   const t = getTask(taskId);
   if (!t) return { contentList: [], statusVo: { sign: '' } };
   const libs: Libs = get('um:libs');
+
+  // 检查是否需要用户选择标签
+  if (t.availableTagOptions && t.availableTagOptions.length > 0 && !t.selectedTagId) {
+    console.log('[getCurrentChainContent] 等待用户选择标签，返回空内容');
+    return { contentList: [], statusVo: { sign: 'TAG_SELECT' as any } };
+  }
 
   // 如果没有当前链，尝试根据阶段/回合初始化
   if (!t.currentLibChain) {
@@ -861,9 +958,16 @@ export function advanceToNextRound(taskId: string) {
 
     // 根据文档 2.1.2.2-2.1.2.5 的库选择规则
     if (nextRound === 1) {
-      openingLibId = 'B1';
-      contentLibId = 'B1';
-      leavingLibId = 'B1';
+      // 第一回合第一轮：随机抽取4个开库标签供用户选择
+      t.availableTagOptions = getTagOptions(taskId, 'opening');
+      t.selectedTagId = null;
+      t.currentLibChain = null; // 清空当前链，等待用户选择
+      t.listBadge = '请选择标签';
+      t.listCountdownEndAt = null;
+      t.lastActionAt = Date.now();
+      set(`um:task:${taskId}`, t);
+      console.log('[advanceToNextRound] 第一回合第一轮：设置标签选项供用户选择');
+      return;
     } else if (nextRound === 2) {
       openingLibId = 'B2';
       contentLibId = 'B2';

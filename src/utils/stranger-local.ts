@@ -19,6 +19,9 @@ export interface Task {
   currentLibChain: CurrentLibChain | null; opponentFindUsedInRound: boolean; qaVipMaxItems?: number; questionnaire?: any; prompts?: Record<string, any>; askFlow?: Record<string, any>;
   renewHistory: Array<{ days: number; cost: number; at: number; success: boolean }>; listBadge: string; listCountdownEndAt: number | null; nextOpponentFindLibId?: string;
   waitingForPrompt: boolean; promptType: string | null; friendAdded: boolean; friendGreetingPending?: boolean;
+    // 标签选择相关
+    availableTagOptions: Array<{ id: string; label: string; type: 'opening' | 'content' | 'leaving' }>; // 当前可选的4个标签选项
+    selectedTagId: string | null; // 用户选择的标签ID
 }
 
 export interface Libs { opening: Record<string, Chain[]>; content: Record<string, Chain[]>; leaving: Record<string, Chain[]>; opponent: Record<string, Chain[]>; qa?: Record<string, any[]> }
@@ -163,6 +166,93 @@ export function initSmLocal() {
 
 function genId() { return 'sm_' + Date.now() + '_' + Math.floor(Math.random() * 10000) }
 
+/**
+ * 随机抽取4个标签选项供用户选择
+ * @param taskId 任务ID
+ * @param tagType 标签类型（opening/content/leaving）
+ * @returns 随机抽取的4个标签选项
+ */
+export function getTagOptions(taskId: string, tagType: 'opening' | 'content' | 'leaving'): Array<{ id: string; label: string; type: 'opening' | 'content' | 'leaving' }> {
+  initSmLocal();
+  const t = getTask(taskId);
+  if (!t) return [];
+
+  const libs: Libs = get('sm:libs');
+  const group = getChainGroupByType(libs, tagType);
+  const availableIds = Object.keys(group).filter(id => !isTagUsed(t, id, tagType));
+
+  // 随机抽取4个标签（如果可用不足4个，则全部返回）
+  const shuffled = availableIds.sort(() => Math.random() - 0.5);
+  const selectedIds = shuffled.slice(0, 4);
+
+  const options = selectedIds.map(id => ({
+    id,
+    label: getTagLabel(id),
+    type: tagType
+  }));
+
+  console.log('[sm.getTagOptions] 随机抽取的标签选项:', options);
+  return options;
+}
+
+/**
+ * 用户选择标签
+ * @param taskId 任务ID
+ * @param tagId 选择的标签ID
+ */
+export function selectTagOption(taskId: string, tagId: string): { ok: boolean; reason?: string } {
+  initSmLocal();
+  const t = getTask(taskId);
+  if (!t) return { ok: false, reason: '任务不存在' };
+
+  const option = t.availableTagOptions.find(opt => opt.id === tagId);
+  if (!option) return { ok: false, reason: '标签选项不存在' };
+
+  // 设置当前选择的标签
+  t.selectedTagId = tagId;
+
+  // 根据选择的标签初始化当前链
+  const libs: Libs = get('sm:libs');
+  const chain = pickChain(getChainGroupByType(libs, option.type), tagId);
+  if (chain) {
+    setCurrentChain(t, option.type, tagId, chain);
+    console.log('[sm.selectTagOption] 用户选择标签:', tagId, 'type:', option.type);
+  } else {
+    console.error('[sm.selectTagOption] 找不到标签链:', tagId);
+    return { ok: false, reason: '标签内容不存在' };
+  }
+
+  t.lastActionAt = Date.now();
+  set(`sm:task:${taskId}`, t);
+  return { ok: true };
+}
+
+/**
+ * 检查标签是否已使用过
+ */
+function isTagUsed(t: Task, tagId: string, tagType: 'opening' | 'content' | 'leaving'): boolean {
+  const stage = t.stageIndex;
+  if (!t.usedLibIdsByStage[stage]) return false;
+
+  const usedLibs = t.usedLibIdsByStage[stage];
+  if (tagType === 'opening') {
+    return usedLibs.opening?.includes(tagId) || false;
+  } else if (tagType === 'content') {
+    return usedLibs.content?.includes(tagId) || false;
+  } else if (tagType === 'leaving') {
+    return usedLibs.leaving?.includes(tagId) || false;
+  }
+  return false;
+}
+
+/**
+ * 获取标签的显示名称
+ */
+function getTagLabel(tagId: string): string {
+  // 根据标签ID返回友好的显示名称
+  return tagId;
+}
+
 export function listTasks(): { id: string; name: string; status: TaskStatus; badge: string; countdownEndAt: number | null }[] {
   initSmLocal();
   const ids: string[] = get('sm:tasks') || [];
@@ -283,6 +373,12 @@ export async function getCurrentChainContent(taskId: string): Promise<{ contentL
   if (!t) return { contentList: [], statusVo: { sign: '' } };
   const libs: Libs = get('sm:libs');
   const needsFriendGate = t.stageIndex === 1 && (!t.roundIndex || t.roundIndex === 0) && !t.friendAdded;
+
+  // 检查是否需要用户选择标签
+  if (t.availableTagOptions && t.availableTagOptions.length > 0 && !t.selectedTagId) {
+    console.log('[sm.getCurrentChainContent] 等待用户选择标签，返回空内容');
+    return { contentList: [], statusVo: { sign: 'TAG_SELECT' as any } };
+  }
 
   if (needsFriendGate && (!t.currentLibChain || t.currentLibChain.type !== 'opening' || t.currentLibChain.libId !== 'M1')) {
     const greeting = pickChain(libs.opening, 'M1');
@@ -682,9 +778,16 @@ export function advanceToNextRound(taskId: string) {
 
     // 根据文档 1.1.2.2-1.1.2.5 的库选择规则
     if (nextRound === 1) {
-      openingLibId = 'M1';
-      contentLibId = 'M1';
-      leavingLibId = 'M1';
+      // 第一回合第一轮：随机抽取4个开库标签供用户选择
+      t.availableTagOptions = getTagOptions(taskId, 'opening');
+      t.selectedTagId = null;
+      t.currentLibChain = null; // 清空当前链，等待用户选择
+      t.listBadge = '请选择标签';
+      t.listCountdownEndAt = null;
+      t.lastActionAt = Date.now();
+      set(`sm:task:${taskId}`, t);
+      console.log('[advanceToNextRound] 第一回合第一轮：设置标签选项供用户选择');
+      return;
     } else if (nextRound === 2) {
       openingLibId = 'M2';
       contentLibId = 'M2';

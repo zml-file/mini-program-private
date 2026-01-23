@@ -90,6 +90,22 @@
         </view>
       </view>
 
+      <!-- 标签选择页面 -->
+      <view v-else-if="currentView === 'tag_select'" class="tag-select-view">
+        <view class="tag-select-title">请选择一个话题标签</view>
+        <view class="tag-options">
+          <view
+            v-for="option in tagOptions"
+            :key="option.id"
+            class="tag-option"
+            @click="handleTagSelect(option.id)"
+          >
+            <view class="tag-id">{{ option.id }}</view>
+            <view class="tag-label">{{ option.label }}</view>
+          </view>
+        </view>
+      </view>
+
       <!-- D模式页面 -->
       <view v-else-if="currentView === 'd'" class="d-view">
         <view class="d-circle" @click="handleDClick">D</view>
@@ -200,11 +216,15 @@ const moduleTitle = ref('');
 const task = ref<any>(null);
 
 // 视图状态
-const currentView = ref<'content' | 'z' | 'd' | 'big_cd' | 'stage_cd'>('content');
+const currentView = ref<'content' | 'z' | 'd' | 'big_cd' | 'stage_cd' | 'tag_select'>('content');
 const contentList = ref<any[]>([]);
 const selectedContentIndex = ref<number | null>(null);
 const copyDisabled = ref(false);
 const isInLeaving = ref(false); // 是否处于离库阶段
+
+// 标签选择相关
+const tagOptions = ref<Array<{ id: string; label: string; type: 'opening' | 'content' | 'leaving' }>>([]);
+
 
 
 // 与熟悉模块一致的拷贝列表数据结构
@@ -381,6 +401,14 @@ const loadTaskData = () => {
 const checkTaskStatus = () => {
   const now = Date.now();
   console.log('[checkTaskStatus] 开始检查任务状态，now:', now);
+
+  // 检查是否需要用户选择标签
+  if (task.value.availableTagOptions && task.value.availableTagOptions.length > 0 && !task.value.selectedTagId) {
+    console.log('[checkTaskStatus] 显示标签选择界面');
+    currentView.value = 'tag_select';
+    tagOptions.value = task.value.availableTagOptions;
+    return;
+  }
 
   // 检查阶段CD
   if (task.value.stageCdUnlockAt && now < task.value.stageCdUnlockAt) {
@@ -783,6 +811,22 @@ const handleZClick = () => {
 const handleDClick = () => {
   console.log('[handleDClick] 点击D按钮');
   // TODO: 实现D点击逻辑
+};
+
+// 处理标签选择
+const handleTagSelect = (tagId: string) => {
+  console.log('[handleTagSelect] 用户选择标签:', tagId);
+  const isUm = moduleTitle.value.includes('不熟');
+  const res = isUm ? um.selectTagOption(taskId.value, tagId) : sm.selectTagOption(taskId.value, tagId);
+
+  if (!res.ok) {
+    uni.showToast({ title: res.reason || '选择失败', icon: 'none' });
+    return;
+  }
+
+  // 刷新任务数据
+  loadTaskData();
+  uni.showToast({ title: '已选择标签', icon: 'success' });
 };
 
 // 处理对方找
@@ -1208,6 +1252,61 @@ const handlePromptConfirm = (confirmed: boolean) => {
     font-weight: bold;
     color: #333;
     margin-bottom: 40rpx;
+  }
+}
+
+// 标签选择界面样式
+.tag-select-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 40rpx;
+  min-height: 400rpx;
+
+  .tag-select-title {
+    font-size: 32rpx;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 60rpx;
+    text-align: center;
+  }
+
+  .tag-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30rpx;
+    width: 100%;
+  }
+
+  .tag-option {
+    background: #fff;
+    border-radius: 20rpx;
+    padding: 40rpx 30rpx;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:active {
+      transform: scale(0.98);
+      box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+    }
+  }
+
+  .tag-id {
+    font-size: 36rpx;
+    font-weight: bold;
+    color: #667eea;
+    margin-bottom: 16rpx;
+  }
+
+  .tag-label {
+    font-size: 26rpx;
+    color: #666;
+    text-align: center;
+    line-height: 1.5;
   }
 }
 
