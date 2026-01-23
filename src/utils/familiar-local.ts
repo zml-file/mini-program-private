@@ -188,9 +188,9 @@ function initDefaults() {
         },
         zDurationByStage: {
           0: { minMs: 0, maxMs: 0 },
-          1: { minMs: getCountdownTimeMs(2 * 60 * 1000), maxMs: getCountdownTimeMs(4 * 60 * 1000) },
-          2: { minMs: getCountdownTimeMs(3 * 60 * 1000), maxMs: getCountdownTimeMs(6 * 60 * 1000) },
-          3: { minMs: getCountdownTimeMs(3 * 60 * 1000), maxMs: getCountdownTimeMs(7 * 60 * 1000) },
+          1: { minMs: getCountdownTimeMs(6 * 60 * 1000), maxMs: getCountdownTimeMs(12 * 60 * 1000) },  // 6-12分钟Z倒计时
+          2: { minMs: getCountdownTimeMs(6 * 60 * 1000), maxMs: getCountdownTimeMs(12 * 60 * 1000) },  // 6-12分钟Z倒计时
+          3: { minMs: getCountdownTimeMs(6 * 60 * 1000), maxMs: getCountdownTimeMs(12 * 60 * 1000) },  // 6-12分钟Z倒计时
           4: { minMs: 0, maxMs: 0 },
         },
         smallCopyCdMs: getCountdownTimeMs(2000),
@@ -981,7 +981,7 @@ export function submitQuestionnaire(taskId: string): { routed: RoutedModule; nex
   if (score >= X) {
     t.questionnaire.routedModule = "familiar"; // 得分达标，后续走熟悉模块的问1/问2/问3流程
   } else {
-    t.questionnaire.routedModule = "familiar"; // 得分不足，问1后路由到不熟/陌生模块
+    t.questionnaire.routedModule = "pending_ask1"; // 得分不足，问1后根据用户选择路由到不熟/陌生模块
   }
 
   set(`fm:task:${taskId}`, t);
@@ -1206,7 +1206,7 @@ export function enterStage1(taskId: string) {
     roundScores: [],
     firstThreeRoundsTotal: 0,
     currentRoundStartTime: null,
-    roundAllowedTimeMs: getCountdownTimeMs(30 * 60 * 1000), // 30分钟回合时间
+    roundAllowedTimeMs: getCountdownTimeMs(randInt(25 * 60 * 1000, 35 * 60 * 1000)), // 25-35分钟回合时间（随机）
     zTimerMs: getCountdownTimeMs(randInt(2 * 60 * 1000, 4 * 60 * 1000)), // 2-4分钟Z倒计时
     hasUsedOpponentFind: false,
     roundCdMultiplier: 1,
@@ -2316,4 +2316,59 @@ export function finishTask(taskId: string) {
 
   console.log('[finishTask] 任务关闭并从列表移除:', taskId);
   return { ok: true };
+}
+
+/**
+ * 检查回合时间是否超时
+ * @param taskId 任务ID
+ * @returns { isTimeout: boolean, shouldFinishLib: boolean } 是否超时和是否需要结束当前库
+ */
+export function checkRoundTimeout(taskId: string): { isTimeout: boolean; shouldFinishLib: boolean } {
+  initDefaults();
+  const t = getTask(taskId);
+  if (!t || !t.stage1) return { isTimeout: false, shouldFinishLib: false };
+
+  // 检查是否启用回合时间限制
+  const { TEST_CONFIG } = require('@/config');
+  if (!TEST_CONFIG.ENABLE_ROUND_TIME_LIMIT) {
+    return { isTimeout: false, shouldFinishLib: false };
+  }
+
+  // 检查是否有回合开始时间
+  if (!t.stage1.currentRoundStartTime) {
+    return { isTimeout: false, shouldFinishLib: false };
+  }
+
+  const now = Date.now();
+  const elapsed = now - t.stage1.currentRoundStartTime;
+  const isTimeout = elapsed >= t.stage1.roundAllowedTimeMs;
+
+  console.log('[checkRoundTimeout] 回合时间检查:', {
+    elapsed: Math.floor(elapsed / 1000 / 60) + '分钟',
+    allowed: Math.floor(t.stage1.roundAllowedTimeMs / 1000 / 60) + '分钟',
+    isTimeout
+  });
+
+  return { isTimeout, shouldFinishLib: isTimeout };
+}
+
+/**
+ * 处理回合超时（给完当前库内容然后进入大CD）
+ * @param taskId 任务ID
+ */
+export function handleRoundTimeout(taskId: string) {
+  initDefaults();
+  const t = getTask(taskId);
+  if (!t || !t.stage1) return;
+
+  console.log('[handleRoundTimeout] 回合超时，准备结束当前库并进入大CD');
+
+  // 标记需要结束当前库
+  // 注意：实际的库结束逻辑由前端在用户复制完当前内容后触发
+  // 这里只是标记超时状态，前端会检测到并自动完成剩余内容后进入CD
+
+  // 重置回合开始时间，避免重复触发
+  t.stage1.currentRoundStartTime = null;
+
+  set(`fm:task:${taskId}`, t);
 }

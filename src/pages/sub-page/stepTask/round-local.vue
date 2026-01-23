@@ -172,10 +172,11 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed } from 'vue';
+import { reactive, ref, computed, onUnmounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import * as um from '@/utils/unfamiliar-local';
 import * as sm from '@/utils/stranger-local';
+import * as fm from '@/utils/familiar-local';
 
 // 数据
 const taskId = ref('');
@@ -188,6 +189,15 @@ const currentView = ref<'content' | 'z' | 'd' | 'big_cd' | 'stage_cd'>('content'
 const contentList = ref<any[]>([]);
 const selectedContentIndex = ref<number | null>(null);
 const copyDisabled = ref(false);
+
+// 复制成功提示计数（总显示20次）
+const copyTipCount = ref(0);
+
+// 获取复制CD时间（从配置中读取）
+const getCopyCdMs = () => {
+  const settings = uni.getStorageSync('fm:settings');
+  return settings?.cd?.smallCopyCdMs || 3000; // 默认3秒
+};
 
 // 与熟悉模块一致的拷贝列表数据结构
 const pageInfoLike = computed(() => ({
@@ -407,7 +417,19 @@ const handleCopy = async (item: any, index: number) => {
   uni.setClipboardData({
     data: item?.text || item?.content || '',
     success: () => {
-      uni.showToast({ title: '复制成功', icon: 'success' });
+      // 检查复制成功提示是否已显示20次
+      if (copyTipCount.value < 20) {
+        // 显示"复制成功，请尽快粘贴。后期不再提示"（使用duration实现短暂显示）
+        uni.showToast({
+          title: '复制成功，请尽快粘贴。后期不再提示',
+          icon: 'success',
+          duration: 1000  // 1秒后自动消失，模拟闪现效果
+        });
+        copyTipCount.value++;
+      } else {
+        // 已显示20次，只显示普通"复制成功"
+        uni.showToast({ title: '复制成功', icon: 'success' });
+      }
     }
   });
 
@@ -473,7 +495,7 @@ const handleCopy = async (item: any, index: number) => {
   }
 
   copyDisabled.value = true;
-  setTimeout(() => (copyDisabled.value = false), 1000);
+  setTimeout(() => (copyDisabled.value = false), getCopyCdMs());
   console.log('[handleCopy] 准备刷新页面数据');
   loadTaskData();
 };

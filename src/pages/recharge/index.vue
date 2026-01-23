@@ -50,6 +50,7 @@ import api from '@/api';
 const data = reactive<any>({
   bottom_bg: '',
   list: [
+    // { gold: 1, price: 0.01 },
     { gold: 850, price: 50 },
     { gold: 2176, price: 128 },
     { gold: 4556, price: 268 },

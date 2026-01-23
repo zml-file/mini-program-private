@@ -57,6 +57,9 @@ export interface Task {
   waitingForPrompt: boolean; // 是否正在等待提示板确认
   promptType: string | null; // 当前提示板类型（如 'friend_added'）
   friendAdded: boolean; // 对方是否已添加好友（用于第一回合）
+  // 标签选择相关
+  availableTagOptions: Array<{ id: string; label: string; type: 'opening' | 'content' | 'leaving' }>; // 当前可选的4个标签选项
+  selectedTagId: string | null; // 用户选择的标签ID
 }
 
 export interface Libs {
@@ -68,6 +71,7 @@ export interface Libs {
 }
 
 export interface Settings {
+  version: number; // 配置版本号，用于配置迁移
   stageThresholdX: Record<number, number>;
   cd: {
     smallCopyCdMs: number;
@@ -84,28 +88,36 @@ export interface Settings {
 function get<T = any>(k: string): T { return uni.getStorageSync(k) as T; }
 function set(k: string, v: any) { uni.setStorageSync(k, v); }
 
+// 当前配置版本号
+const SETTINGS_VERSION = 3;
+
 // Init defaults (idempotent)
 export function initUmLocal() {
-  if (!get('um:settings')) {
+  const existingSettings: Settings | null = get('um:settings');
+
+  // 如果没有配置或配置版本过旧，则更新配置
+  if (!existingSettings || !existingSettings.version || existingSettings.version < SETTINGS_VERSION) {
     const settings: Settings = {
+      version: SETTINGS_VERSION,
       stageThresholdX: { 0: 10, 1: 2, 2: 2, 3: 2, 4: 0 },
       cd: {
-        smallCopyCdMs: getCountdownTimeMs(3000),
+        smallCopyCdMs: 3000,  // 3秒CD，不受快速测试模式影响
         bigRoundMinMs: getCountdownTimeMs(15 * 60 * 1000),
         opponentFindWaitMs: getCountdownTimeMs(20 * 1000),
         opponentFindCopyEnableMs: getCountdownTimeMs(20 * 1000),
-        idleWarnMs: getCountdownTimeMs(60 * 1000),
-        idleForceCdMs: getCountdownTimeMs(5 * 60 * 1000),
+        idleWarnMs: getCountdownTimeMs(45 * 60 * 1000),  // 45分钟空闲警告
+        idleForceCdMs: getCountdownTimeMs(50 * 60 * 1000),  // 50分钟强制进入CD（警告后5分钟）
         zDurationByStage: [
-          { minMs: getCountdownTimeMs(60 * 1000), maxMs: getCountdownTimeMs(120 * 1000) },
-          { minMs: getCountdownTimeMs(60 * 1000), maxMs: getCountdownTimeMs(120 * 1000) },
-          { minMs: getCountdownTimeMs(60 * 1000), maxMs: getCountdownTimeMs(120 * 1000) },
-          { minMs: getCountdownTimeMs(60 * 1000), maxMs: getCountdownTimeMs(120 * 1000) },
-          { minMs: getCountdownTimeMs(60 * 1000), maxMs: getCountdownTimeMs(120 * 1000) },
+          { minMs: getCountdownTimeMs(6 * 60 * 1000), maxMs: getCountdownTimeMs(12 * 60 * 1000) },  // 6-12分钟Z倒计时
+          { minMs: getCountdownTimeMs(6 * 60 * 1000), maxMs: getCountdownTimeMs(12 * 60 * 1000) },  // 6-12分钟Z倒计时
+          { minMs: getCountdownTimeMs(6 * 60 * 1000), maxMs: getCountdownTimeMs(12 * 60 * 1000) },  // 6-12分钟Z倒计时
+          { minMs: getCountdownTimeMs(6 * 60 * 1000), maxMs: getCountdownTimeMs(12 * 60 * 1000) },  // 6-12分钟Z倒计时
+          { minMs: getCountdownTimeMs(6 * 60 * 1000), maxMs: getCountdownTimeMs(12 * 60 * 1000) },  // 6-12分钟Z倒计时
         ],
       },
     };
     set('um:settings', settings);
+    console.log('[initUmLocal] 配置已更新到版本', SETTINGS_VERSION);
   }
   if (!get('um:libs')) {
     const libs: Libs = {
@@ -378,6 +390,94 @@ function setCurrentChain(t: Task, type: CurrentLibChain['type'], libId: string, 
   markChainUsedInternal(t, libId, type);
 }
 
+/**
+ * 随机抽取4个标签选项供用户选择
+ * @param taskId 任务ID
+ * @param tagType 标签类型（opening/content/leaving）
+ * @returns 随机抽取的4个标签选项
+ */
+export function getTagOptions(taskId: string, tagType: 'opening' | 'content' | 'leaving'): Array<{ id: string; label: string; type: 'opening' | 'content' | 'leaving' }> {
+  initUmLocal();
+  const t = getTask(taskId);
+  if (!t) return [];
+
+  const libs: Libs = get('um:libs');
+  const group = getChainGroupByType(libs, tagType);
+  const availableIds = Object.keys(group).filter(id => !isTagUsed(t, id, tagType));
+
+  // 随机抽取4个标签（如果可用不足4个，则全部返回）
+  const shuffled = availableIds.sort(() => Math.random() - 0.5);
+  const selectedIds = shuffled.slice(0, 4);
+
+  const options = selectedIds.map(id => ({
+    id,
+    label: getTagLabel(id),
+    type: tagType
+  }));
+
+  console.log('[getTagOptions] 随机抽取的标签选项:', options);
+  return options;
+}
+
+/**
+ * 用户选择标签
+ * @param taskId 任务ID
+ * @param tagId 选择的标签ID
+ */
+export function selectTagOption(taskId: string, tagId: string): { ok: boolean; reason?: string } {
+  initUmLocal();
+  const t = getTask(taskId);
+  if (!t) return { ok: false, reason: '任务不存在' };
+
+  const option = t.availableTagOptions.find(opt => opt.id === tagId);
+  if (!option) return { ok: false, reason: '标签选项不存在' };
+
+  // 设置当前选择的标签
+  t.selectedTagId = tagId;
+
+  // 根据选择的标签初始化当前链
+  const libs: Libs = get('um:libs');
+  const chain = pickChain(getChainGroupByType(libs, option.type), tagId);
+  if (chain) {
+    setCurrentChain(t, option.type, tagId, chain);
+    console.log('[selectTagOption] 用户选择标签:', tagId, 'type:', option.type);
+  } else {
+    console.error('[selectTagOption] 找不到标签链:', tagId);
+    return { ok: false, reason: '标签内容不存在' };
+  }
+
+  t.lastActionAt = Date.now();
+  set(`um:task:${taskId}`, t);
+  return { ok: true };
+}
+
+/**
+ * 检查标签是否已使用过
+ */
+function isTagUsed(t: Task, tagId: string, tagType: 'opening' | 'content' | 'leaving'): boolean {
+  const stage = t.stageIndex;
+  if (!t.usedLibIdsByStage[stage]) return false;
+
+  const usedLibs = t.usedLibIdsByStage[stage];
+  if (tagType === 'opening') {
+    return usedLibs.opening?.includes(tagId) || false;
+  } else if (tagType === 'content') {
+    return usedLibs.content?.includes(tagId) || false;
+  } else if (tagType === 'leaving') {
+    return usedLibs.leaving?.includes(tagId) || false;
+  }
+  return false;
+}
+
+/**
+ * 获取标签的显示名称
+ */
+function getTagLabel(tagId: string): string {
+  // 根据标签ID返回友好的显示名称
+  // 可以根据实际需求定制
+  return tagId;
+}
+
 // Points and progress
 export function addPoint(taskId: string, amount: number) {
   initUmLocal();
@@ -497,11 +597,17 @@ function getChainGroupByType(libs: Libs, type: CurrentLibChain['type']): Record<
   }
 }
 
-export async function getCurrentChainContent(taskId: string): Promise<{ contentList: ChainNode[]; statusVo: { sign: '' | 'Z' | 'D' } }> {
+export async function getCurrentChainContent(taskId: string): Promise<{ contentList: ChainNode[]; statusVo: { sign: '' | 'Z' | 'D' | 'TAG_SELECT' } }> {
   initUmLocal();
   const t = getTask(taskId);
   if (!t) return { contentList: [], statusVo: { sign: '' } };
   const libs: Libs = get('um:libs');
+
+  // 检查是否需要用户选择标签
+  if (t.availableTagOptions && t.availableTagOptions.length > 0 && !t.selectedTagId) {
+    console.log('[getCurrentChainContent] 等待用户选择标签，返回空内容');
+    return { contentList: [], statusVo: { sign: 'TAG_SELECT' as any } };
+  }
 
   // 如果没有当前链，尝试根据阶段/回合初始化
   if (!t.currentLibChain) {
@@ -861,9 +967,16 @@ export function advanceToNextRound(taskId: string) {
 
     // 根据文档 2.1.2.2-2.1.2.5 的库选择规则
     if (nextRound === 1) {
-      openingLibId = 'B1';
-      contentLibId = 'B1';
-      leavingLibId = 'B1';
+      // 第一回合第一轮：随机抽取4个开库标签供用户选择
+      t.availableTagOptions = getTagOptions(taskId, 'opening');
+      t.selectedTagId = null;
+      t.currentLibChain = null; // 清空当前链，等待用户选择
+      t.listBadge = '请选择标签';
+      t.listCountdownEndAt = null;
+      t.lastActionAt = Date.now();
+      set(`um:task:${taskId}`, t);
+      console.log('[advanceToNextRound] 第一回合第一轮：设置标签选项供用户选择');
+      return;
     } else if (nextRound === 2) {
       openingLibId = 'B2';
       contentLibId = 'B2';
@@ -888,14 +1001,35 @@ export function advanceToNextRound(taskId: string) {
     }
 
     // 根据文档 2.2.2.2-2.2.2.4 的库选择规则
+    // 第二阶段内容库：B4.5.6.7.10（随机抽取不重复）
+    const availableContentLibs = ["B4", "B4.5", "B6", "B7", "B5", "B5.5", "B6", "B7", "B8", "B9", "B10"];
+    const usedLibIds = t.usedLibIdsByStage[2] || { content: [] };
+    const unusedLibs = availableContentLibs.filter(lib => !usedLibIds.content?.includes(lib));
+
     if (nextRound === 1 || nextRound === 2) {
-      // 第一、二回合相同
+      // 第一、二回合：从未使用的库中随机抽取
+      if (unusedLibs.length > 0) {
+        const randomIndex = Math.floor(Math.random() * unusedLibs.length);
+        contentLibId = unusedLibs[randomIndex];
+        if (!usedLibIds.content) usedLibIds.content = [];
+        usedLibIds.content.push(contentLibId);
+      } else {
+        contentLibId = "B4"; // 默认
+      }
       openingLibId = 'B3';
-      contentLibId = 'B4'; // 这里应该是 B4.5.6.7.10 中的一个，暂时用 B4
       leavingLibId = 'B3';
     } else if (nextRound === 3) {
+      // 第三回合：从剩余未使用的库中随机抽取
+      const remainingLibs = unusedLibs.filter(lib => !usedLibIds.content?.includes(lib));
+      if (remainingLibs.length > 0) {
+        const randomIndex = Math.floor(Math.random() * remainingLibs.length);
+        contentLibId = remainingLibs[randomIndex];
+        if (!usedLibIds.content) usedLibIds.content = [];
+        usedLibIds.content.push(contentLibId);
+      } else {
+        contentLibId = "B5"; // 默认
+      }
       openingLibId = 'B2';
-      contentLibId = 'B5'; // 这里应该是 B5.6.7.10 中没被抽取过的 + B8.9
       leavingLibId = 'B3';
     }
   }
@@ -917,9 +1051,22 @@ export function advanceToNextRound(taskId: string) {
     }
 
     // 根据文档 2.3.2.2-2.3.2.4 的库选择规则
+    // 第三阶段内容库：B11~B19（随机抽取不重复）
+    const availableContentLibs = ["B11", "B12", "B13", "B14", "B15", "B16", "B17", "B18", "B19"];
+    const usedLibIds = t.usedLibIdsByStage[3] || { content: [] };
+    const unusedLibs = availableContentLibs.filter(lib => !usedLibIds.content?.includes(lib));
+
+    if (unusedLibs.length > 0) {
+      // 从未使用的库中随机抽取
+      const randomIndex = Math.floor(Math.random() * unusedLibs.length);
+      contentLibId = unusedLibs[randomIndex];
+      if (!usedLibIds.content) usedLibIds.content = [];
+      usedLibIds.content.push(contentLibId);
+    } else {
+      contentLibId = "B11"; // 默认
+    }
     // 所有回合都使用相同的库
     openingLibId = 'B4';
-    contentLibId = 'B11'; // 这里应该是 B11~B19 中的一个
     leavingLibId = 'B4';
   }
 
@@ -1265,5 +1412,75 @@ export function clearAllTasks() {
   ids.forEach(id => uni.removeStorageSync(`um:task:${id}`));
   set('um:tasks', []);
   console.log('[um] 已清除所有任务');
+}
+
+/**
+ * 检查任务是否空闲超时
+ * @param taskId 任务ID
+ * @returns { needWarn: boolean, needForceCD: boolean } 是否需要警告和是否需要强制CD
+ */
+export function checkIdleTimeout(taskId: string): { needWarn: boolean; needForceCD: boolean } {
+  initUmLocal();
+  const t = getTask(taskId);
+  if (!t) return { needWarn: false, needForceCD: false };
+
+  const settings: Settings = get('um:settings');
+  const now = Date.now();
+  const idleTime = now - t.lastActionAt;
+
+  // 检查是否需要警告（45分钟）
+  const needWarn = idleTime >= settings.cd.idleWarnMs && !t.idleWarningAt;
+
+  // 检查是否需要强制CD（50分钟）
+  const needForceCD = idleTime >= settings.cd.idleForceCdMs && !t.hardIdleToCdAt;
+
+  return { needWarn, needForceCD };
+}
+
+/**
+ * 标记已显示空闲警告
+ * @param taskId 任务ID
+ */
+export function markIdleWarningShown(taskId: string) {
+  initUmLocal();
+  const t = getTask(taskId);
+  if (!t) return;
+
+  t.idleWarningAt = Date.now();
+  set(`um:task:${taskId}`, t);
+  console.log('[um] 已标记空闲警告显示时间');
+}
+
+/**
+ * 因空闲超时强制进入大CD
+ * @param taskId 任务ID
+ */
+export function forceIdleToBigCd(taskId: string) {
+  initUmLocal();
+  const t = getTask(taskId);
+  if (!t) return;
+
+  console.log('[um] 因空闲超时强制进入大CD');
+  t.hardIdleToCdAt = Date.now();
+  set(`um:task:${taskId}`, t);
+
+  // 进入回合大CD
+  enterRoundBigCd(taskId, 1);
+}
+
+/**
+ * 重置空闲计时器（用户有操作时调用）
+ * @param taskId 任务ID
+ */
+export function resetIdleTimer(taskId: string) {
+  initUmLocal();
+  const t = getTask(taskId);
+  if (!t) return;
+
+  // 重置空闲相关标记
+  t.idleWarningAt = null;
+  t.hardIdleToCdAt = null;
+  t.lastActionAt = Date.now();
+  set(`um:task:${taskId}`, t);
 }
 

@@ -90,6 +90,22 @@
         </view>
       </view>
 
+      <!-- 标签选择页面 -->
+      <view v-else-if="currentView === 'tag_select'" class="tag-select-view">
+        <view class="tag-select-title">请选择一个话题标签</view>
+        <view class="tag-options">
+          <view
+            v-for="option in tagOptions"
+            :key="option.id"
+            class="tag-option"
+            @click="handleTagSelect(option.id)"
+          >
+            <view class="tag-id">{{ option.id }}</view>
+            <view class="tag-label">{{ option.label }}</view>
+          </view>
+        </view>
+      </view>
+
       <!-- D模式页面 -->
       <view v-else-if="currentView === 'd'" class="d-view">
         <view class="d-circle" @click="handleDClick">D</view>
@@ -188,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, nextTick } from 'vue';
+import { reactive, ref, computed, nextTick, onUnmounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import * as um from '@/utils/unfamiliar-local';
 import * as sm from '@/utils/stranger-local';
@@ -200,12 +216,24 @@ const moduleTitle = ref('');
 const task = ref<any>(null);
 
 // 视图状态
-const currentView = ref<'content' | 'z' | 'd' | 'big_cd' | 'stage_cd'>('content');
+const currentView = ref<'content' | 'z' | 'd' | 'big_cd' | 'stage_cd' | 'tag_select'>('content');
 const contentList = ref<any[]>([]);
 const selectedContentIndex = ref<number | null>(null);
 const copyDisabled = ref(false);
 const isInLeaving = ref(false); // 是否处于离库阶段
 
+// 标签选择相关
+const tagOptions = ref<Array<{ id: string; label: string; type: 'opening' | 'content' | 'leaving' }>>([]);
+
+// 复制成功提示计数（总显示20次）
+const copyTipCount = ref(0);
+
+// 获取复制CD时间（从配置中读取）
+const getCopyCdMs = () => {
+  const isUm = moduleTitle.value.includes('不熟');
+  const settings = isUm ? uni.getStorageSync('um:settings') : uni.getStorageSync('sm:settings');
+  return settings?.cd?.smallCopyCdMs || 3000; // 默认3秒
+};
 
 // 与熟悉模块一致的拷贝列表数据结构
 const pageInfoLike = computed(() => ({
@@ -257,6 +285,9 @@ const searchDialog = ref<any>(null);
 const isClosingSearchDialog = ref(false); // 防止无限递归
 const searchCopyDisabled = ref(false);
 
+// 空闲检测
+const idleCheckTimer = ref<number | null>(null);
+
 // 对方找弹窗列表（与熟悉模块一致）所需的数据结构
 const opponentPageInfoLike = computed(() => ({
   contentList: (opponentContentList.value || []).map((it: any, i: number) => ({
@@ -293,11 +324,77 @@ onLoad((options: any) => {
 
   if (taskId.value) {
     loadTaskData();
+    startIdleCheck(); // 启动空闲检测
   } else {
     uni.showToast({ title: '任务ID缺失', icon: 'error' });
     setTimeout(() => uni.navigateBack(), 2000);
   }
 });
+
+// 页面卸载时清理定时器
+onUnmounted(() => {
+  if (idleCheckTimer.value) {
+    clearInterval(idleCheckTimer.value);
+    idleCheckTimer.value = null;
+  }
+});
+
+// 启动空闲检测定时器
+const startIdleCheck = () => {
+  // 每分钟检查一次
+  idleCheckTimer.value = setInterval(() => {
+    checkIdleStatus();
+  }, 60 * 1000) as any;
+
+  console.log('[round-new] 空闲检测定时器已启动');
+};
+
+// 检查空闲状态
+const checkIdleStatus = () => {
+  if (!taskId.value) return;
+
+  const isUm = moduleTitle.value.includes('不熟');
+  const result = isUm ? um.checkIdleTimeout(taskId.value) : sm.checkIdleTimeout(taskId.value);
+
+  if (result.needForceCD) {
+    // 需要强制进入CD
+    console.log('[round-new] 检测到空闲超时，强制进入大CD');
+    if (isUm) {
+      um.forceIdleToBigCd(taskId.value);
+    } else {
+      sm.forceIdleToBigCd(taskId.value);
+    }
+    loadTaskData();
+  } else if (result.needWarn) {
+    // 需要显示警告
+    console.log('[round-new] 检测到空闲45分钟，显示警告提示板');
+    showIdleWarning();
+  }
+};
+
+// 显示空闲警告提示板
+const showIdleWarning = () => {
+  const isUm = moduleTitle.value.includes('不熟');
+
+  // 标记已显示警告
+  if (isUm) {
+    um.markIdleWarningShown(taskId.value);
+  } else {
+    sm.markIdleWarningShown(taskId.value);
+  }
+
+  promptTitle.value = '长时间未操作提醒';
+  promptText.value = '您已经45分钟未操作了，如果继续不操作，系统将自动进入冷却期。是否继续？';
+  promptButtons.value = [
+    { label: '继续操作', key: 'continue' },
+  ];
+
+  nextTick(() => {
+    if (promptDialog.value && typeof promptDialog.value.open === 'function') {
+      promptDialog.value.open();
+    }
+  });
+};
 
 // 加载任务数据
 const loadTaskData = () => {
@@ -381,6 +478,14 @@ const loadTaskData = () => {
 const checkTaskStatus = () => {
   const now = Date.now();
   console.log('[checkTaskStatus] 开始检查任务状态，now:', now);
+
+  // 检查是否需要用户选择标签
+  if (task.value.availableTagOptions && task.value.availableTagOptions.length > 0 && !task.value.selectedTagId) {
+    console.log('[checkTaskStatus] 显示标签选择界面');
+    currentView.value = 'tag_select';
+    tagOptions.value = task.value.availableTagOptions;
+    return;
+  }
 
   // 检查阶段CD
   if (task.value.stageCdUnlockAt && now < task.value.stageCdUnlockAt) {
@@ -670,7 +775,19 @@ const handleCopy = async (item: any, index: number) => {
       if (hasScoreSymbol) {
         uni.showToast({ title: '复制成功，积分+1', icon: 'success' });
       } else {
-        uni.showToast({ title: '复制成功', icon: 'success' });
+        // 检查复制成功提示是否已显示20次
+        if (copyTipCount.value < 20) {
+          // 显示"复制成功，请尽快粘贴。后期不再提示"（使用duration实现短暂显示）
+          uni.showToast({
+            title: '复制成功，请尽快粘贴。后期不再提示',
+            icon: 'success',
+            duration: 1000  // 1秒后自动消失，模拟闪现效果
+          });
+          copyTipCount.value++;
+        } else {
+          // 已显示20次，只显示普通"复制成功"
+          uni.showToast({ title: '复制成功', icon: 'success' });
+        }
       }
     }
   });
@@ -686,7 +803,7 @@ const handleCopy = async (item: any, index: number) => {
     }
     isUm ? um.finishCurrentLibNode(taskId.value) : sm.finishCurrentLibNode(taskId.value);
     copyDisabled.value = true;
-    setTimeout(() => (copyDisabled.value = false), 1000);
+    setTimeout(() => (copyDisabled.value = false), getCopyCdMs());
     loadTaskData();
     return;
   }
@@ -718,7 +835,7 @@ const handleCopy = async (item: any, index: number) => {
   if (taskAfter.stageIndex === 4 && taskAfter.currentLibChain.type === 'content') {
     console.log('[handleCopy] 第四阶段内容库，仅记录复制，不在前端推进节点');
     copyDisabled.value = true;
-    setTimeout(() => (copyDisabled.value = false), 1000);
+    setTimeout(() => (copyDisabled.value = false), getCopyCdMs());
     loadTaskData();
     return;
   }
@@ -763,7 +880,7 @@ const handleCopy = async (item: any, index: number) => {
   }
 
   copyDisabled.value = true;
-  setTimeout(() => (copyDisabled.value = false), 1000);
+  setTimeout(() => (copyDisabled.value = false), getCopyCdMs());
   console.log('[handleCopy] 准备刷新页面数据');
   loadTaskData();
 };
@@ -783,6 +900,22 @@ const handleZClick = () => {
 const handleDClick = () => {
   console.log('[handleDClick] 点击D按钮');
   // TODO: 实现D点击逻辑
+};
+
+// 处理标签选择
+const handleTagSelect = (tagId: string) => {
+  console.log('[handleTagSelect] 用户选择标签:', tagId);
+  const isUm = moduleTitle.value.includes('不熟');
+  const res = isUm ? um.selectTagOption(taskId.value, tagId) : sm.selectTagOption(taskId.value, tagId);
+
+  if (!res.ok) {
+    uni.showToast({ title: res.reason || '选择失败', icon: 'none' });
+    return;
+  }
+
+  // 刷新任务数据
+  loadTaskData();
+  uni.showToast({ title: '已选择标签', icon: 'success' });
 };
 
 // 处理对方找
@@ -1106,6 +1239,18 @@ const handlePromptClick = (key: string) => {
   const isUm = moduleTitle.value.includes('不熟');
   const type = task.value?.promptType || '';
 
+  // 处理空闲警告
+  if (key === 'continue') {
+    console.log('[handlePromptClick] 用户选择继续操作，重置空闲计时器');
+    if (isUm) {
+      um.resetIdleTimer(taskId.value);
+    } else {
+      sm.resetIdleTimer(taskId.value);
+    }
+    promptDialog.value?.close();
+    return;
+  }
+
   if (type === 'friend_added') {
     // 兼容旧逻辑
     isUm ? um.confirmFriendAdded(taskId.value, key === 'yes') : sm.confirmFriendAdded(taskId.value, key === 'yes');
@@ -1208,6 +1353,61 @@ const handlePromptConfirm = (confirmed: boolean) => {
     font-weight: bold;
     color: #333;
     margin-bottom: 40rpx;
+  }
+}
+
+// 标签选择界面样式
+.tag-select-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 40rpx;
+  min-height: 400rpx;
+
+  .tag-select-title {
+    font-size: 32rpx;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 60rpx;
+    text-align: center;
+  }
+
+  .tag-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30rpx;
+    width: 100%;
+  }
+
+  .tag-option {
+    background: #fff;
+    border-radius: 20rpx;
+    padding: 40rpx 30rpx;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:active {
+      transform: scale(0.98);
+      box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+    }
+  }
+
+  .tag-id {
+    font-size: 36rpx;
+    font-weight: bold;
+    color: #667eea;
+    margin-bottom: 16rpx;
+  }
+
+  .tag-label {
+    font-size: 26rpx;
+    color: #666;
+    text-align: center;
+    line-height: 1.5;
   }
 }
 
