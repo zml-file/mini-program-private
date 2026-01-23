@@ -204,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, nextTick } from 'vue';
+import { reactive, ref, computed, nextTick, onUnmounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import * as um from '@/utils/unfamiliar-local';
 import * as sm from '@/utils/stranger-local';
@@ -285,6 +285,9 @@ const searchDialog = ref<any>(null);
 const isClosingSearchDialog = ref(false); // 防止无限递归
 const searchCopyDisabled = ref(false);
 
+// 空闲检测
+const idleCheckTimer = ref<number | null>(null);
+
 // 对方找弹窗列表（与熟悉模块一致）所需的数据结构
 const opponentPageInfoLike = computed(() => ({
   contentList: (opponentContentList.value || []).map((it: any, i: number) => ({
@@ -321,11 +324,77 @@ onLoad((options: any) => {
 
   if (taskId.value) {
     loadTaskData();
+    startIdleCheck(); // 启动空闲检测
   } else {
     uni.showToast({ title: '任务ID缺失', icon: 'error' });
     setTimeout(() => uni.navigateBack(), 2000);
   }
 });
+
+// 页面卸载时清理定时器
+onUnmounted(() => {
+  if (idleCheckTimer.value) {
+    clearInterval(idleCheckTimer.value);
+    idleCheckTimer.value = null;
+  }
+});
+
+// 启动空闲检测定时器
+const startIdleCheck = () => {
+  // 每分钟检查一次
+  idleCheckTimer.value = setInterval(() => {
+    checkIdleStatus();
+  }, 60 * 1000) as any;
+
+  console.log('[round-new] 空闲检测定时器已启动');
+};
+
+// 检查空闲状态
+const checkIdleStatus = () => {
+  if (!taskId.value) return;
+
+  const isUm = moduleTitle.value.includes('不熟');
+  const result = isUm ? um.checkIdleTimeout(taskId.value) : sm.checkIdleTimeout(taskId.value);
+
+  if (result.needForceCD) {
+    // 需要强制进入CD
+    console.log('[round-new] 检测到空闲超时，强制进入大CD');
+    if (isUm) {
+      um.forceIdleToBigCd(taskId.value);
+    } else {
+      sm.forceIdleToBigCd(taskId.value);
+    }
+    loadTaskData();
+  } else if (result.needWarn) {
+    // 需要显示警告
+    console.log('[round-new] 检测到空闲45分钟，显示警告提示板');
+    showIdleWarning();
+  }
+};
+
+// 显示空闲警告提示板
+const showIdleWarning = () => {
+  const isUm = moduleTitle.value.includes('不熟');
+
+  // 标记已显示警告
+  if (isUm) {
+    um.markIdleWarningShown(taskId.value);
+  } else {
+    sm.markIdleWarningShown(taskId.value);
+  }
+
+  promptTitle.value = '长时间未操作提醒';
+  promptText.value = '您已经45分钟未操作了，如果继续不操作，系统将自动进入冷却期。是否继续？';
+  promptButtons.value = [
+    { label: '继续操作', key: 'continue' },
+  ];
+
+  nextTick(() => {
+    if (promptDialog.value && typeof promptDialog.value.open === 'function') {
+      promptDialog.value.open();
+    }
+  });
+};
 
 // 加载任务数据
 const loadTaskData = () => {
@@ -1169,6 +1238,18 @@ const showGenericPrompt = () => {
 const handlePromptClick = (key: string) => {
   const isUm = moduleTitle.value.includes('不熟');
   const type = task.value?.promptType || '';
+
+  // 处理空闲警告
+  if (key === 'continue') {
+    console.log('[handlePromptClick] 用户选择继续操作，重置空闲计时器');
+    if (isUm) {
+      um.resetIdleTimer(taskId.value);
+    } else {
+      sm.resetIdleTimer(taskId.value);
+    }
+    promptDialog.value?.close();
+    return;
+  }
 
   if (type === 'friend_added') {
     // 兼容旧逻辑

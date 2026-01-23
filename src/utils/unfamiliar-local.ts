@@ -105,8 +105,8 @@ export function initUmLocal() {
         bigRoundMinMs: getCountdownTimeMs(15 * 60 * 1000),
         opponentFindWaitMs: getCountdownTimeMs(20 * 1000),
         opponentFindCopyEnableMs: getCountdownTimeMs(20 * 1000),
-        idleWarnMs: getCountdownTimeMs(60 * 1000),
-        idleForceCdMs: getCountdownTimeMs(5 * 60 * 1000),
+        idleWarnMs: getCountdownTimeMs(45 * 60 * 1000),  // 45分钟空闲警告
+        idleForceCdMs: getCountdownTimeMs(50 * 60 * 1000),  // 50分钟强制进入CD（警告后5分钟）
         zDurationByStage: [
           { minMs: getCountdownTimeMs(6 * 60 * 1000), maxMs: getCountdownTimeMs(12 * 60 * 1000) },  // 6-12分钟Z倒计时
           { minMs: getCountdownTimeMs(6 * 60 * 1000), maxMs: getCountdownTimeMs(12 * 60 * 1000) },  // 6-12分钟Z倒计时
@@ -1412,5 +1412,75 @@ export function clearAllTasks() {
   ids.forEach(id => uni.removeStorageSync(`um:task:${id}`));
   set('um:tasks', []);
   console.log('[um] 已清除所有任务');
+}
+
+/**
+ * 检查任务是否空闲超时
+ * @param taskId 任务ID
+ * @returns { needWarn: boolean, needForceCD: boolean } 是否需要警告和是否需要强制CD
+ */
+export function checkIdleTimeout(taskId: string): { needWarn: boolean; needForceCD: boolean } {
+  initUmLocal();
+  const t = getTask(taskId);
+  if (!t) return { needWarn: false, needForceCD: false };
+
+  const settings: Settings = get('um:settings');
+  const now = Date.now();
+  const idleTime = now - t.lastActionAt;
+
+  // 检查是否需要警告（45分钟）
+  const needWarn = idleTime >= settings.cd.idleWarnMs && !t.idleWarningAt;
+
+  // 检查是否需要强制CD（50分钟）
+  const needForceCD = idleTime >= settings.cd.idleForceCdMs && !t.hardIdleToCdAt;
+
+  return { needWarn, needForceCD };
+}
+
+/**
+ * 标记已显示空闲警告
+ * @param taskId 任务ID
+ */
+export function markIdleWarningShown(taskId: string) {
+  initUmLocal();
+  const t = getTask(taskId);
+  if (!t) return;
+
+  t.idleWarningAt = Date.now();
+  set(`um:task:${taskId}`, t);
+  console.log('[um] 已标记空闲警告显示时间');
+}
+
+/**
+ * 因空闲超时强制进入大CD
+ * @param taskId 任务ID
+ */
+export function forceIdleToBigCd(taskId: string) {
+  initUmLocal();
+  const t = getTask(taskId);
+  if (!t) return;
+
+  console.log('[um] 因空闲超时强制进入大CD');
+  t.hardIdleToCdAt = Date.now();
+  set(`um:task:${taskId}`, t);
+
+  // 进入回合大CD
+  enterRoundBigCd(taskId, 1);
+}
+
+/**
+ * 重置空闲计时器（用户有操作时调用）
+ * @param taskId 任务ID
+ */
+export function resetIdleTimer(taskId: string) {
+  initUmLocal();
+  const t = getTask(taskId);
+  if (!t) return;
+
+  // 重置空闲相关标记
+  t.idleWarningAt = null;
+  t.hardIdleToCdAt = null;
+  t.lastActionAt = Date.now();
+  set(`um:task:${taskId}`, t);
 }
 
