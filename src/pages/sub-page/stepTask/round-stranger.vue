@@ -164,9 +164,18 @@ const isInLeaving = ref(false);
 const noContentRefreshLock = ref(false);
 const advancingRound = ref(false);
 const lastSign = ref<'' | 'Z' | 'D'>('');
+
+// 复制成功提示计数（总显示20次）
+const copyTipCount = ref(0);
 const currentNodeTotalSegments = ref(1);
 const heartbeat = ref<number | null>(null);
 const zEndTimeMs = ref<number | null>(null);
+
+// 获取复制CD时间（从配置中读取）
+const getCopyCdMs = () => {
+  const settings = uni.getStorageSync('sm:settings');
+  return settings?.cd?.smallCopyCdMs || 3000; // 默认3秒
+};
 
 const cdEndTime = ref<string>('');
 const cdTitle = ref('');
@@ -575,7 +584,19 @@ const handleCopy = (item: any, index?: number) => {
   uni.setClipboardData({
     data: copyText,
     success: () => {
-      uni.showToast({ title: hasScoreSymbol ? '复制成功，积分+1' : '复制成功', icon: 'success' });
+      // 检查复制成功提示是否已显示20次
+      if (copyTipCount.value < 20) {
+        // 显示"复制成功，请尽快粘贴。后期不再提示"（使用duration实现短暂显示）
+        uni.showToast({
+          title: '复制成功，请尽快粘贴。后期不再提示',
+          icon: 'success',
+          duration: 1000  // 1秒后自动消失，模拟闪现效果
+        });
+        copyTipCount.value++;
+      } else {
+        // 已显示20次，只显示普通"复制成功"
+        uni.showToast({ title: hasScoreSymbol ? '复制成功，积分+1' : '复制成功', icon: 'success' });
+      }
     },
   });
 
@@ -585,7 +606,7 @@ const handleCopy = (item: any, index?: number) => {
     console.log('[stranger] handleCopy finish node because end symbol or leaving');
     sm.finishCurrentLibNode(taskId.value);
     copyDisabled.value = true;
-    setTimeout(() => (copyDisabled.value = false), 1000);
+    setTimeout(() => (copyDisabled.value = false), getCopyCdMs());
     loadTaskData();
     return;
   }
@@ -633,7 +654,7 @@ const handleCopy = (item: any, index?: number) => {
   }
 
   copyDisabled.value = true;
-  setTimeout(() => (copyDisabled.value = false), 1000);
+  setTimeout(() => (copyDisabled.value = false), getCopyCdMs());
   loadTaskData();
 };
 
