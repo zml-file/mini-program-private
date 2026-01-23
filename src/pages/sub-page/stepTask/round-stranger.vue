@@ -171,6 +171,12 @@ const currentNodeTotalSegments = ref(1);
 const heartbeat = ref<number | null>(null);
 const zEndTimeMs = ref<number | null>(null);
 
+// 获取复制CD时间（从配置中读取）
+const getCopyCdMs = () => {
+  const settings = uni.getStorageSync('sm:settings');
+  return settings?.cd?.smallCopyCdMs || 3000; // 默认3秒
+};
+
 const cdEndTime = ref<string>('');
 const cdTitle = ref('');
 const zEndTime = ref<string>('');
@@ -600,7 +606,7 @@ const handleCopy = (item: any, index?: number) => {
     console.log('[stranger] handleCopy finish node because end symbol or leaving');
     sm.finishCurrentLibNode(taskId.value);
     copyDisabled.value = true;
-    setTimeout(() => (copyDisabled.value = false), 2000);  // 2秒CD
+    setTimeout(() => (copyDisabled.value = false), getCopyCdMs());
     loadTaskData();
     return;
   }
@@ -648,7 +654,7 @@ const handleCopy = (item: any, index?: number) => {
   }
 
   copyDisabled.value = true;
-  setTimeout(() => (copyDisabled.value = false), 1000);
+  setTimeout(() => (copyDisabled.value = false), getCopyCdMs());
   loadTaskData();
 };
 

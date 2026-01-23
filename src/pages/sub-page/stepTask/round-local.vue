@@ -192,6 +192,12 @@ const copyDisabled = ref(false);
 // 复制成功提示计数（总显示20次）
 const copyTipCount = ref(0);
 
+// 获取复制CD时间（从配置中读取）
+const getCopyCdMs = () => {
+  const settings = uni.getStorageSync('fm:settings');
+  return settings?.cd?.smallCopyCdMs || 3000; // 默认3秒
+};
+
 // 与熟悉模块一致的拷贝列表数据结构
 const pageInfoLike = computed(() => ({
   contentList: (contentList.value || []).map((it: any, i: number) => ({
@@ -488,7 +494,7 @@ const handleCopy = async (item: any, index: number) => {
   }
 
   copyDisabled.value = true;
-  setTimeout(() => (copyDisabled.value = false), 2000);  // 2秒CD
+  setTimeout(() => (copyDisabled.value = false), getCopyCdMs());
   console.log('[handleCopy] 准备刷新页面数据');
   loadTaskData();
 };

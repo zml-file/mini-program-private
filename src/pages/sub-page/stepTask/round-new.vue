@@ -228,7 +228,12 @@ const tagOptions = ref<Array<{ id: string; label: string; type: 'opening' | 'con
 // 复制成功提示计数（总显示20次）
 const copyTipCount = ref(0);
 
-
+// 获取复制CD时间（从配置中读取）
+const getCopyCdMs = () => {
+  const isUm = moduleTitle.value.includes('不熟');
+  const settings = isUm ? uni.getStorageSync('um:settings') : uni.getStorageSync('sm:settings');
+  return settings?.cd?.smallCopyCdMs || 3000; // 默认3秒
+};
 
 // 与熟悉模块一致的拷贝列表数据结构
 const pageInfoLike = computed(() => ({
@@ -729,7 +734,7 @@ const handleCopy = async (item: any, index: number) => {
     }
     isUm ? um.finishCurrentLibNode(taskId.value) : sm.finishCurrentLibNode(taskId.value);
     copyDisabled.value = true;
-    setTimeout(() => (copyDisabled.value = false), 2000);  // 2秒CD
+    setTimeout(() => (copyDisabled.value = false), getCopyCdMs());
     loadTaskData();
     return;
   }
@@ -761,7 +766,7 @@ const handleCopy = async (item: any, index: number) => {
   if (taskAfter.stageIndex === 4 && taskAfter.currentLibChain.type === 'content') {
     console.log('[handleCopy] 第四阶段内容库，仅记录复制，不在前端推进节点');
     copyDisabled.value = true;
-    setTimeout(() => (copyDisabled.value = false), 2000);  // 2秒CD
+    setTimeout(() => (copyDisabled.value = false), getCopyCdMs());
     loadTaskData();
     return;
   }
@@ -806,7 +811,7 @@ const handleCopy = async (item: any, index: number) => {
   }
 
   copyDisabled.value = true;
-  setTimeout(() => (copyDisabled.value = false), 1000);
+  setTimeout(() => (copyDisabled.value = false), getCopyCdMs());
   console.log('[handleCopy] 准备刷新页面数据');
   loadTaskData();
 };
