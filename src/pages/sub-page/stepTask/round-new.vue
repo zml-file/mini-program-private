@@ -225,6 +225,9 @@ const isInLeaving = ref(false); // 是否处于离库阶段
 // 标签选择相关
 const tagOptions = ref<Array<{ id: string; label: string; type: 'opening' | 'content' | 'leaving' }>>([]);
 
+// 复制成功提示计数（总显示20次）
+const copyTipCount = ref(0);
+
 
 
 // 与熟悉模块一致的拷贝列表数据结构
@@ -698,7 +701,19 @@ const handleCopy = async (item: any, index: number) => {
       if (hasScoreSymbol) {
         uni.showToast({ title: '复制成功，积分+1', icon: 'success' });
       } else {
-        uni.showToast({ title: '复制成功', icon: 'success' });
+        // 检查复制成功提示是否已显示20次
+        if (copyTipCount.value < 20) {
+          // 显示"复制成功，请尽快粘贴。后期不再提示"（使用duration实现短暂显示）
+          uni.showToast({
+            title: '复制成功，请尽快粘贴。后期不再提示',
+            icon: 'success',
+            duration: 1000  // 1秒后自动消失，模拟闪现效果
+          });
+          copyTipCount.value++;
+        } else {
+          // 已显示20次，只显示普通"复制成功"
+          uni.showToast({ title: '复制成功', icon: 'success' });
+        }
       }
     }
   });
@@ -714,7 +729,7 @@ const handleCopy = async (item: any, index: number) => {
     }
     isUm ? um.finishCurrentLibNode(taskId.value) : sm.finishCurrentLibNode(taskId.value);
     copyDisabled.value = true;
-    setTimeout(() => (copyDisabled.value = false), 1000);
+    setTimeout(() => (copyDisabled.value = false), 2000);  // 2秒CD
     loadTaskData();
     return;
   }
@@ -746,7 +761,7 @@ const handleCopy = async (item: any, index: number) => {
   if (taskAfter.stageIndex === 4 && taskAfter.currentLibChain.type === 'content') {
     console.log('[handleCopy] 第四阶段内容库，仅记录复制，不在前端推进节点');
     copyDisabled.value = true;
-    setTimeout(() => (copyDisabled.value = false), 1000);
+    setTimeout(() => (copyDisabled.value = false), 2000);  // 2秒CD
     loadTaskData();
     return;
   }

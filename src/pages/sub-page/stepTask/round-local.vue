@@ -189,6 +189,9 @@ const contentList = ref<any[]>([]);
 const selectedContentIndex = ref<number | null>(null);
 const copyDisabled = ref(false);
 
+// 复制成功提示计数（总显示20次）
+const copyTipCount = ref(0);
+
 // 与熟悉模块一致的拷贝列表数据结构
 const pageInfoLike = computed(() => ({
   contentList: (contentList.value || []).map((it: any, i: number) => ({
@@ -407,7 +410,19 @@ const handleCopy = async (item: any, index: number) => {
   uni.setClipboardData({
     data: item?.text || item?.content || '',
     success: () => {
-      uni.showToast({ title: '复制成功', icon: 'success' });
+      // 检查复制成功提示是否已显示20次
+      if (copyTipCount.value < 20) {
+        // 显示"复制成功，请尽快粘贴。后期不再提示"（使用duration实现短暂显示）
+        uni.showToast({
+          title: '复制成功，请尽快粘贴。后期不再提示',
+          icon: 'success',
+          duration: 1000  // 1秒后自动消失，模拟闪现效果
+        });
+        copyTipCount.value++;
+      } else {
+        // 已显示20次，只显示普通"复制成功"
+        uni.showToast({ title: '复制成功', icon: 'success' });
+      }
     }
   });
 
@@ -473,7 +488,7 @@ const handleCopy = async (item: any, index: number) => {
   }
 
   copyDisabled.value = true;
-  setTimeout(() => (copyDisabled.value = false), 1000);
+  setTimeout(() => (copyDisabled.value = false), 2000);  // 2秒CD
   console.log('[handleCopy] 准备刷新页面数据');
   loadTaskData();
 };

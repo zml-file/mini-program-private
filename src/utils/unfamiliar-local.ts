@@ -992,14 +992,35 @@ export function advanceToNextRound(taskId: string) {
     }
 
     // 根据文档 2.2.2.2-2.2.2.4 的库选择规则
+    // 第二阶段内容库：B4.5.6.7.10（随机抽取不重复）
+    const availableContentLibs = ["B4", "B4.5", "B6", "B7", "B5", "B5.5", "B6", "B7", "B8", "B9", "B10"];
+    const usedLibIds = t.usedLibIdsByStage[2] || { content: [] };
+    const unusedLibs = availableContentLibs.filter(lib => !usedLibIds.content?.includes(lib));
+
     if (nextRound === 1 || nextRound === 2) {
-      // 第一、二回合相同
+      // 第一、二回合：从未使用的库中随机抽取
+      if (unusedLibs.length > 0) {
+        const randomIndex = Math.floor(Math.random() * unusedLibs.length);
+        contentLibId = unusedLibs[randomIndex];
+        if (!usedLibIds.content) usedLibIds.content = [];
+        usedLibIds.content.push(contentLibId);
+      } else {
+        contentLibId = "B4"; // 默认
+      }
       openingLibId = 'B3';
-      contentLibId = 'B4'; // 这里应该是 B4.5.6.7.10 中的一个，暂时用 B4
       leavingLibId = 'B3';
     } else if (nextRound === 3) {
+      // 第三回合：从剩余未使用的库中随机抽取
+      const remainingLibs = unusedLibs.filter(lib => !usedLibIds.content?.includes(lib));
+      if (remainingLibs.length > 0) {
+        const randomIndex = Math.floor(Math.random() * remainingLibs.length);
+        contentLibId = remainingLibs[randomIndex];
+        if (!usedLibIds.content) usedLibIds.content = [];
+        usedLibIds.content.push(contentLibId);
+      } else {
+        contentLibId = "B5"; // 默认
+      }
       openingLibId = 'B2';
-      contentLibId = 'B5'; // 这里应该是 B5.6.7.10 中没被抽取过的 + B8.9
       leavingLibId = 'B3';
     }
   }
@@ -1021,9 +1042,22 @@ export function advanceToNextRound(taskId: string) {
     }
 
     // 根据文档 2.3.2.2-2.3.2.4 的库选择规则
+    // 第三阶段内容库：B11~B19（随机抽取不重复）
+    const availableContentLibs = ["B11", "B12", "B13", "B14", "B15", "B16", "B17", "B18", "B19"];
+    const usedLibIds = t.usedLibIdsByStage[3] || { content: [] };
+    const unusedLibs = availableContentLibs.filter(lib => !usedLibIds.content?.includes(lib));
+
+    if (unusedLibs.length > 0) {
+      // 从未使用的库中随机抽取
+      const randomIndex = Math.floor(Math.random() * unusedLibs.length);
+      contentLibId = unusedLibs[randomIndex];
+      if (!usedLibIds.content) usedLibIds.content = [];
+      usedLibIds.content.push(contentLibId);
+    } else {
+      contentLibId = "B11"; // 默认
+    }
     // 所有回合都使用相同的库
     openingLibId = 'B4';
-    contentLibId = 'B11'; // 这里应该是 B11~B19 中的一个
     leavingLibId = 'B4';
   }
 
