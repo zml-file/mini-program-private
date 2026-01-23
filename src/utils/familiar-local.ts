@@ -981,7 +981,7 @@ export function submitQuestionnaire(taskId: string): { routed: RoutedModule; nex
   if (score >= X) {
     t.questionnaire.routedModule = "familiar"; // 得分达标，后续走熟悉模块的问1/问2/问3流程
   } else {
-    t.questionnaire.routedModule = "familiar"; // 得分不足，问1后路由到不熟/陌生模块
+    t.questionnaire.routedModule = "pending_ask1"; // 得分不足，问1后根据用户选择路由到不熟/陌生模块
   }
 
   set(`fm:task:${taskId}`, t);
