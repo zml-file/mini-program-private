@@ -127,7 +127,28 @@ const handleMemberCardClick = () => {
 
 // 充值点击
 const handleRechargeClick = () => {
-  console.log('点击充值');
+  console.log('点击充值, 用户VIP等级:', data.info?.userLevel);
+
+  // 如果用户是游客/来宾（VIP等级<1），显示提示
+  if (!data.info?.userLevel || data.info.userLevel < 1) {
+    uni.showModal({
+      title: '提示',
+      content: '充值即可升级为会员',
+      confirmText: '立即充值',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          // 用户点击确认，跳转到充值页面
+          uni.navigateTo({
+            url: '/pages/recharge/index'
+          });
+        }
+      }
+    });
+    return;
+  }
+
+  // 已经是会员，直接跳转充值页面
   uni.navigateTo({
     url: '/pages/recharge/index'
   });

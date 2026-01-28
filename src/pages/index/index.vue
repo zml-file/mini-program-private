@@ -130,6 +130,19 @@ const handleWenhao = () => {
 };
 
 const handleJump = (type: string, module?: string) => {
+  // 权限检查：来宾只能访问免费模块
+  const userLevel = data.info?.userLevel || 0;
+  const isGuest = userLevel < 1;
+
+  // 判断是否是免费模块
+  const isFreeModule = module === '免费模块';
+
+  // 如果是来宾且不是免费模块，显示提示
+  if (isGuest && !isFreeModule) {
+    showGuestTip();
+    return;
+  }
+
   // 免费陌生不熟熟悉超熟
   if (type === 'step') {
     uni.navigateTo({
@@ -156,6 +169,16 @@ const handleJump = (type: string, module?: string) => {
       url: '/pages/sub-page/common/description',
     });
   }
+};
+
+// 显示来宾提示
+const showGuestTip = () => {
+  uni.showToast({
+    title: '请先成为会员',
+    icon: 'none',
+    duration: 3000,
+    mask: true, // 显示半透明遮罩
+  });
 };
 
 /**

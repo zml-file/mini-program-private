@@ -1,5 +1,5 @@
 <template>
-  <md-page title="超熟模块" isBtn :btnTextItems="[{ text: '创建线下任务', key: 'create' }]">
+  <md-page title="超熟模块" isBtn :btnTextItems="[{ text: '创建线下计划', key: 'create' }]">
     <view class="container">
       <block v-for="item in data.list" :key="item.id">
         <bc-task-item

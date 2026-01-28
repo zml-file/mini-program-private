@@ -7,7 +7,7 @@
         <view class="search flex-c m-right-12">
           <input
             v-model="searchKeyword"
-            placeholder="请输入对方的问题"
+            :placeholder="searchPlaceholder"
             class="m-left-20 input"
             placeholder-style="color: #7A59ED;"
           />
@@ -115,7 +115,7 @@
       <!-- 正常内容显示 -->
       <view v-else-if="currentView === 'content'" class="content-view">
         <block v-if="contentList.length > 0">
-          <bc-copy-list :info="pageInfoLike" :disabled="copyDisabled" @copy="handleCopyFromBc" />
+          <bc-copy-list :info="pageInfoLike" :disabled="copyDisabled" :userVipLevel="userVipLevel" @copy="handleCopyFromBc" />
         </block>
         <view v-else class="empty-state">
           <text>暂无内容</text>
@@ -167,7 +167,7 @@
       </view>
 
       <!-- 对方找内容列表（与熟悉模块一致样式） -->
-      <bc-copy-list :info="opponentPageInfoLike" :disabled="opponentCopyCountdown > 0" @copy="handleCopyOpponentFromBc" />
+      <bc-copy-list :info="opponentPageInfoLike" :disabled="opponentCopyCountdown > 0" :userVipLevel="userVipLevel" @copy="handleCopyOpponentFromBc" />
     </md-dialog>
 
     <!-- 搜索结果弹窗 -->
@@ -204,16 +204,19 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, nextTick, onUnmounted } from 'vue';
+import { reactive, ref, computed, nextTick, onUnmounted, onMounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import * as um from '@/utils/unfamiliar-local';
 import * as sm from '@/utils/stranger-local';
+import { getPlaceholder } from '@/utils/placeholder-manager';
+import api from '@/api';
 
 // 数据
 const taskId = ref('');
 const taskName = ref('');
 const moduleTitle = ref('');
 const task = ref<any>(null);
+const userVipLevel = ref(1); // 用户VIP等级，默认VIP1
 
 // 视图状态
 const currentView = ref<'content' | 'z' | 'd' | 'big_cd' | 'stage_cd' | 'tag_select'>('content');
@@ -284,6 +287,17 @@ const searchResults = ref<any[]>([]);
 const searchDialog = ref<any>(null);
 const isClosingSearchDialog = ref(false); // 防止无限递归
 const searchCopyDisabled = ref(false);
+const searchPlaceholder = ref('请输入对方的问题'); // 动态placeholder
+
+// 加载动态placeholder
+onMounted(async () => {
+  try {
+    const moduleCode = moduleTitle.value.includes('不熟') ? '不熟模块' : '陌生模块';
+    searchPlaceholder.value = await getPlaceholder(moduleCode as any);
+  } catch (error) {
+    console.error('[round-new] 加载placeholder失败:', error);
+  }
+});
 
 // 空闲检测
 const idleCheckTimer = ref<number | null>(null);
@@ -322,6 +336,9 @@ onLoad((options: any) => {
   try { taskName.value = decodeURIComponent(rawName); } catch (e) { taskName.value = rawName; }
   moduleTitle.value = options.module || '';
 
+  // 获取用户VIP等级
+  getUserVipLevel();
+
   if (taskId.value) {
     loadTaskData();
     startIdleCheck(); // 启动空闲检测
@@ -330,6 +347,18 @@ onLoad((options: any) => {
     setTimeout(() => uni.navigateBack(), 2000);
   }
 });
+
+// 获取用户VIP等级
+const getUserVipLevel = async () => {
+  try {
+    const res = await api.common.info();
+    userVipLevel.value = res.data?.userLevel || 1;
+    console.log('[round-new] 用户VIP等级:', userVipLevel.value);
+  } catch (error) {
+    console.error('[round-new] 获取用户VIP等级失败:', error);
+    userVipLevel.value = 1; // 失败时默认VIP1
+  }
+};
 
 // 页面卸载时清理定时器
 onUnmounted(() => {

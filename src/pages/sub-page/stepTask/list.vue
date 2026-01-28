@@ -31,14 +31,27 @@
     </view>
     <!-- 创建弹窗 -->
     <md-dialog :title="`创建${data.title.slice(0, 2)}任务`" ref="popup" @ok="handleOk" @cancel="handleCancel">
-      <!-- :maxlength="6" -->
-      <uni-easyinput
-        v-model="data.value"
-        primaryColor="#827afd"
-        :styles="{
-          borderColor: '#827afd',
-        }"
-        placeholder="请输入名称"></uni-easyinput>
+      <!-- 任务名称输入 -->
+      <view class="m-bottom-20">
+        <view class="dialog-label m-bottom-10">任务名称</view>
+        <uni-easyinput
+          v-model="data.value"
+          primaryColor="#827afd"
+          :styles="{
+            borderColor: '#827afd',
+          }"
+          placeholder="请输入名称"></uni-easyinput>
+      </view>
+
+      <!-- 周期价格选择 -->
+      <view>
+        <view class="dialog-label m-bottom-10">选择周期</view>
+        <uni-data-checkbox
+          mode="list"
+          icon="right"
+          v-model="data.selectedPeriod"
+          :localdata="data.periodOptions"></uni-data-checkbox>
+      </view>
     </md-dialog>
     <!-- 自定义底部创建免费任务按钮 -->
     <template #footer>
@@ -81,6 +94,13 @@ const data = reactive<any>({
   bottom_bg: '',
   loading: false, // 加载状态
   isFirstLoad: true, // 是否首次加载
+  // 周期价格选择相关
+  selectedPeriod: '', // 选中的周期
+  periodOptions: [
+    { value: '5', text: '782心币/5天', days: 5, price: 782 },
+    { value: '8', text: '1394心币/8天', days: 8, price: 1394 },
+    { value: '15', text: '1666心币/15天', days: 15, price: 1666 },
+  ],
 });
 const popup = ref<any>(null);
 
@@ -132,17 +152,34 @@ const handleOk = () => {
     Toast('请输入任务名称');
     return;
   }
-  fetchCreateTask({ taskName: data.value });
+  if (!data.selectedPeriod) {
+    Toast('请选择周期');
+    return;
+  }
+
+  // 获取选中的周期配置
+  const selectedOption = data.periodOptions.find((opt: any) => opt.value === data.selectedPeriod);
+  if (!selectedOption) {
+    Toast('周期选择错误');
+    return;
+  }
+
+  fetchCreateTask({
+    taskName: data.value,
+    durationDays: selectedOption.days,
+    price: selectedOption.price
+  });
 };
 
 const handleCancel = () => {
   data.value = '';
+  data.selectedPeriod = '';
 };
 
 const openCreateDialog = () => {
   // 如果是免费对话，直接创建，无需弹出问卷
   if (data.title.includes('免费')) {
-    fetchCreateTask({ taskName: '免费对话' });
+    fetchCreateTask({ taskName: '免费对话', durationDays: 5, price: 0 });
     return;
   }
 
@@ -399,8 +436,25 @@ const getTaskList = async (module?: any) => {
         const created = sm.createTask({ name: '测试订单', durationDays: 5 });
         if (created.ok) { lt = sm.listTasks(); uni.showToast({ title: '已创建示例订单', icon: 'none' }); }
       }
+    } else if (title.includes('免费')) {
+      // 免费模块使用独立存储
+      fm.initFamiliarLocal('free');
+      lt = fm.listTasks();
+      if (!lt || lt.length === 0) {
+        const created = fm.createTask({ name: '测试订单', durationDays: 5 });
+        if (created.ok) { lt = fm.listTasks(); uni.showToast({ title: '已创建示例订单', icon: 'none' }); }
+      }
+    } else if (title.includes('超熟')) {
+      // 超熟模块使用独立存储
+      fm.initFamiliarLocal('super');
+      lt = fm.listTasks();
+      if (!lt || lt.length === 0) {
+        const created = fm.createTask({ name: '测试订单', durationDays: 5 });
+        if (created.ok) { lt = fm.listTasks(); uni.showToast({ title: '已创建示例订单', icon: 'none' }); }
+      }
     } else {
-      fm.initFamiliarLocal();
+      // 熟悉模块使用默认存储
+      fm.initFamiliarLocal('familiar');
       lt = fm.listTasks();
       if (!lt || lt.length === 0) {
         const created = fm.createTask({ name: '测试订单', durationDays: 5 });
@@ -462,7 +516,7 @@ const getTaskList = async (module?: any) => {
 };
 
 // 创建任务
-const fetchCreateTask = async (params: Pick<Task.Create.Body, 'taskName'>) => {
+const fetchCreateTask = async (params: { taskName: string; durationDays: number; price: number }) => {
   if (data.loading) return; // 防止重复点击
   data.loading = true;
   uni.showLoading({ title: '创建中...', mask: true });
@@ -476,7 +530,7 @@ const fetchCreateTask = async (params: Pick<Task.Create.Body, 'taskName'>) => {
 
     if (title.includes('不熟')) {
       um.initUmLocal();
-      const res = um.createTask({ name, durationDays: 5 });
+      const res = um.createTask({ name, durationDays: params.durationDays });
       if (res.ok && res.task) {
         // 使用 round-new.vue（round-local 编译有问题，复制一份）
         uni.navigateTo({ url: `/pages/sub-page/stepTask/round-new?taskId=${res.task.id}&taskName=${params?.taskName}&module=不熟模块` });
@@ -487,7 +541,7 @@ const fetchCreateTask = async (params: Pick<Task.Create.Body, 'taskName'>) => {
       }
     } else if (title.includes('陌生')) {
       sm.initSmLocal();
-      const res = sm.createTask({ name, durationDays: 5 });
+      const res = sm.createTask({ name, durationDays: params.durationDays });
       if (res.ok && res.task) {
         // 陌生模块使用专用页面 round-stranger.vue
         uni.navigateTo({ url: `/pages/sub-page/stepTask/round-stranger?taskId=${res.task.id}&taskName=${encodeURIComponent(params?.taskName || '')}&module=陌生模块` });
@@ -497,12 +551,25 @@ const fetchCreateTask = async (params: Pick<Task.Create.Body, 'taskName'>) => {
         await getTaskList();
       }
     } else {
-      // 熟悉/超熟/免费模块保持原有逻辑，需要问卷
-      fm.initFamiliarLocal();
-      const res = fm.createTask({ name, durationDays: 5 });
+      // 熟悉/超熟/免费模块
+      // 根据模块类型初始化不同的存储
+      if (title.includes('免费')) {
+        fm.initFamiliarLocal('free');
+      } else if (title.includes('超熟')) {
+        fm.initFamiliarLocal('super');
+      } else {
+        fm.initFamiliarLocal('familiar');
+      }
+
+      const res = fm.createTask({ name, durationDays: params.durationDays });
       if (res.ok && res.task) {
-        // 熟悉/超熟/免费模块问卷页（保持原路由）
-        uni.navigateTo({ url: `/pages/sub-page/stepTask/questionnaire?taskId=${res.task.id}&taskName=${params?.taskName}&module=${data.title}` });
+        // 免费模块直接进入对话页，跳过问卷
+        if (title.includes('免费')) {
+          uni.navigateTo({ url: `/pages/sub-page/stepTask/round?module=免费模块&taskId=${res.task.id}` });
+        } else {
+          // 熟悉/超熟模块需要问卷
+          uni.navigateTo({ url: `/pages/sub-page/stepTask/questionnaire?taskId=${res.task.id}&taskName=${params?.taskName}&module=${data.title}` });
+        }
       } else {
         uni.showToast({ title: res.reason || '创建失败', icon: 'none' });
         data.loading = false;
@@ -540,6 +607,13 @@ onShow(() => {
 .container {
   padding: 180rpx 30rpx 30rpx;
   box-sizing: border-box;
+}
+
+/* 弹窗标签样式 */
+.dialog-label {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
 }
 
 /* 底部免费按钮 */

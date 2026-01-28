@@ -38,7 +38,7 @@
           <image class="mf-bg" src="@/static/images/xianxia.png" mode="widthFix" />
           <view class="mf-text">
             <text class="mf-plus">＋</text>
-            <text class="mf-label">创建线下任务</text>
+            <text class="mf-label">创建线下计划</text>
           </view>
         </view>
       </view>

@@ -98,7 +98,7 @@
       <view v-else-if="currentView === 'content'" class="content-view">
         <!-- 内容列表 -->
         <block v-if="contentList.length > 0">
-          <bc-copy-list :info="pageInfoLike" :disabled="copyDisabled" @copy="handleCopyFromBc" />
+          <bc-copy-list :info="pageInfoLike" :disabled="copyDisabled" :userVipLevel="userVipLevel" @copy="handleCopyFromBc" />
         </block>
 
         <!-- 空状态 -->
@@ -135,7 +135,7 @@
       </view>
 
       <!-- 对方找内容列表（与熟悉模块一致样式） -->
-      <bc-copy-list :info="opponentPageInfoLike" :disabled="opponentCopyCountdown > 0" @copy="handleCopyOpponentFromBc" />
+      <bc-copy-list :info="opponentPageInfoLike" :disabled="opponentCopyCountdown > 0" :userVipLevel="userVipLevel" @copy="handleCopyOpponentFromBc" />
     </md-dialog>
 
     <!-- 搜索结果弹窗 -->
@@ -177,12 +177,14 @@ import { onLoad } from '@dcloudio/uni-app';
 import * as um from '@/utils/unfamiliar-local';
 import * as sm from '@/utils/stranger-local';
 import * as fm from '@/utils/familiar-local';
+import api from '@/api';
 
 // 数据
 const taskId = ref('');
 const taskName = ref('');
 const moduleTitle = ref('');
 const task = ref<any>(null);
+const userVipLevel = ref(1); // 用户VIP等级，默认VIP1
 
 // 视图状态
 const currentView = ref<'content' | 'z' | 'd' | 'big_cd' | 'stage_cd'>('content');
@@ -266,6 +268,9 @@ onLoad((options: any) => {
   try { taskName.value = decodeURIComponent(rawName); } catch (e) { taskName.value = rawName; }
   moduleTitle.value = options.module || '';
 
+  // 获取用户VIP等级
+  getUserVipLevel();
+
   if (taskId.value) {
     loadTaskData();
   } else {
@@ -273,6 +278,18 @@ onLoad((options: any) => {
     setTimeout(() => uni.navigateBack(), 2000);
   }
 });
+
+// 获取用户VIP等级
+const getUserVipLevel = async () => {
+  try {
+    const res = await api.common.info();
+    userVipLevel.value = res.data?.userLevel || 1;
+    console.log('[round-local] 用户VIP等级:', userVipLevel.value);
+  } catch (error) {
+    console.error('[round-local] 获取VIP等级失败:', error);
+    userVipLevel.value = 1; // 失败时默认VIP1
+  }
+};
 
 // 加载任务数据
 const loadTaskData = () => {

@@ -13,7 +13,7 @@
       </view>
       <!-- 问题列表 -->
       <block v-if="data.detail?.endTime && hasItTimeOut(data.detail.endTime)">
-        <bc-copy-list :info="data.pageInfo || {}" @copy="handleCopy" />
+        <bc-copy-list :info="data.pageInfo || {}" :userVipLevel="userVipLevel" @copy="handleCopy" />
       </block>
       <!-- 三个状态圆圈 -->
       <view class="status flex-c m-bottom-30">
@@ -43,7 +43,7 @@
     </view>
     <!-- 提示弹窗 -->
     <md-dialog ref="popup" @ok="handleOk" title="请选择对方找的回复内容" width="80%">
-      <bc-copy-list :info="data.pageInfo || {}" @copy="handleCopyModal" :disabled="!hasItTimeOut(data.cdTime)" />
+      <bc-copy-list :info="data.pageInfo || {}" @copy="handleCopyModal" :disabled="!hasItTimeOut(data.cdTime)" :userVipLevel="userVipLevel" />
       <!-- <bc-countdown
         v-if="!hasItTimeOut(data.cdTime)"
         size="small"
@@ -92,6 +92,7 @@ import {
 } from '@/utils/familiar-local';
 import { taskModule } from '@/utils/data';
 import type { taskModuleKey } from '@/utils/data';
+import api from '@/api';
 // API
 import {
   getHint,
@@ -106,6 +107,9 @@ import {
 import stage1 from './shuxi/stage1';
 import stage2 from './shuxi/stage2';
 import stage3 from './shuxi/stage3';
+
+// 用户VIP等级
+const userVipLevel = ref(1);
 
 const data = reactive<any>({
   taskId: null,
@@ -352,6 +356,9 @@ onLoad(async options => {
   data.moduleCodeName = moduleCode;
   data.moduleCode = taskModule[data.moduleCode as taskModuleKey];
 
+  // 获取用户VIP等级
+  getUserVipLevel();
+
   if (taskId) {
     const detail = await init(taskId);
     if (detail?.roundNum == 0 || (detail?.roundNum || 0) >= 4) {
@@ -359,6 +366,18 @@ onLoad(async options => {
     }
   }
 });
+
+// 获取用户VIP等级
+const getUserVipLevel = async () => {
+  try {
+    const res = await api.common.info();
+    userVipLevel.value = res.data?.userLevel || 1;
+    console.log('[round1] 用户VIP等级:', userVipLevel.value);
+  } catch (error) {
+    console.error('[round1] 获取VIP等级失败:', error);
+    userVipLevel.value = 1; // 失败时默认VIP1
+  }
+};
 </script>
 
 <style lang="scss" scoped>

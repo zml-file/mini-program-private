@@ -53,7 +53,7 @@
       
       <!-- 问题列表 -->
       <block v-if="data.currentStep === 'normal'">
-        <bc-copy-list :info="data.pageInfo || {}" @copy="handleCopy" />
+        <bc-copy-list :info="data.pageInfo || {}" :userVipLevel="userVipLevel" @copy="handleCopy" />
       </block>
       <!-- 三个状态圆圈 -->
       <view class="status flex-c m-bottom-30">
@@ -115,7 +115,7 @@
       </view>
 
       <!--  内容列表，根据倒计时状态禁用复制按钮 -->
-      <bc-copy-list :info="data.pageInfo || {}" :disabled="!data.canCopyLookfor" @copy="handleCopyInPopup" />
+      <bc-copy-list :info="data.pageInfo || {}" :disabled="!data.canCopyLookfor" :userVipLevel="userVipLevel" @copy="handleCopyInPopup" />
     </md-dialog>
   </md-page>
 </template>
@@ -167,8 +167,11 @@ import {
   finishTask
 } from '@/utils/familiar-local';
 import { getCountdownTimeMs, TEST_CONFIG } from '@/config';
+import api from '@/api';
 import { getCountdown } from '@/utils/util';
 
+// 用户VIP等级
+const userVipLevel = ref(1);
 
 const data = reactive<any>({
   taskId: null,
@@ -248,7 +251,10 @@ onLoad((options: any) => {
   console.log('[round] onLoad:', options);
   data.taskId = options.taskId;
   data.taskName = options.taskName || '您咨询';
-  
+
+  // 获取用户VIP等级
+  getUserVipLevel();
+
   if (data.taskId) {
     loadTaskData();
   } else {
@@ -262,9 +268,28 @@ onLoad((options: any) => {
   }
 });
 
+// 获取用户VIP等级
+const getUserVipLevel = async () => {
+  try {
+    const res = await api.common.info();
+    userVipLevel.value = res.data?.userLevel || 1;
+    console.log('[round] 用户VIP等级:', userVipLevel.value);
+  } catch (error) {
+    console.error('[round] 获取VIP等级失败:', error);
+    userVipLevel.value = 1; // 失败时默认VIP1
+  }
+};
+
 // 加载任务数据
 const loadTaskData = () => {
-  initFamiliarLocal();
+  // 根据模块类型初始化不同的存储
+  if (data.moduleCodeName && data.moduleCodeName.includes('免费')) {
+    initFamiliarLocal('free');
+  } else if (data.moduleCodeName && data.moduleCodeName.includes('超熟')) {
+    initFamiliarLocal('super');
+  } else {
+    initFamiliarLocal('familiar');
+  }
   const task = getTask(data.taskId);
   
   if (!task) {
@@ -2403,7 +2428,14 @@ const _round = async (r?: { taskId?: number }) => {
   console.log('[_round] 开始，taskId:', _taskId, '当前detail:', data.detail);
 
   // 强制初始化并重新读取，确保获取最新数据
-  initFamiliarLocal();
+  // 根据模块类型初始化不同的存储
+  if (data.moduleCodeName && data.moduleCodeName.includes('免费')) {
+    initFamiliarLocal('free');
+  } else if (data.moduleCodeName && data.moduleCodeName.includes('超熟')) {
+    initFamiliarLocal('super');
+  } else {
+    initFamiliarLocal('familiar');
+  }
   
   // 优先使用本地任务数据（如果存在）
   const localTask = getTask(_taskId);
@@ -3189,7 +3221,14 @@ onLoad(async options => {
   data.moduleCode = taskModule[module as taskModuleKey];
 
   // 本地优先：使用 familiar-local 直接读取任务并映射页面所需字段，避免后端请求
-  initFamiliarLocal();
+  // 根据模块类型初始化不同的存储
+  if (module && module.includes('免费')) {
+    initFamiliarLocal('free');
+  } else if (module && module.includes('超熟')) {
+    initFamiliarLocal('super');
+  } else {
+    initFamiliarLocal('familiar');
+  }
   const t = getTask(taskId);
   if (t) {
     const now = Date.now();

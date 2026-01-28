@@ -149,10 +149,16 @@ const handlePurchase = async () => {
   // 3. 验证金币余额是否充足
   const balance = data.info?.remainingVirtual || 0;
   if (balance < data.currentPrice) {
+    // 检查用户是否是会员
+    const userLevel = data.info?.userLevel || 0;
+    const isGuest = userLevel < 1;
+
     uni.showModal({
       title: '金币不足',
-      content: `您的金币余额不足，需要${data.currentPrice}金币，当前余额${balance}金币。是否前往充值？`,
-      confirmText: '去充值',
+      content: isGuest
+        ? '充值即可升级为会员'
+        : `您的金币余额不足，需要${data.currentPrice}金币，当前余额${balance}金币。是否前往充值？`,
+      confirmText: isGuest ? '立即充值' : '去充值',
       cancelText: '取消',
       success: (res) => {
         if (res.confirm) {

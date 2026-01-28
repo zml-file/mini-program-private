@@ -14,10 +14,12 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { reactive, ref, onMounted } from 'vue';
 import { getCountdown } from '@/utils/util';
+import api from '@/api';
 
 const data = reactive({});
+const userVipLevel = ref(0); // 用户VIP等级，默认0（游客）
 
 const props = defineProps({
   // 显示充值
@@ -73,8 +75,50 @@ const props = defineProps({
   },
 });
 
+// 获取用户VIP等级
+const getUserVipLevel = async () => {
+  try {
+    const res = await api.common.info();
+    userVipLevel.value = res.data?.userLevel || 0;
+    console.log('[bc-bottom-bar] 用户VIP等级:', userVipLevel.value);
+  } catch (error) {
+    console.error('[bc-bottom-bar] 获取VIP等级失败:', error);
+    userVipLevel.value = 0; // 失败时默认游客
+  }
+};
+
+// 组件挂载时获取用户VIP等级
+onMounted(() => {
+  if (props.showRecharge) {
+    getUserVipLevel();
+  }
+});
+
 // 充值
 const handleRecharge = () => {
+  console.log('[bc-bottom-bar] 点击充值按钮, 用户VIP等级:', userVipLevel.value);
+
+  // 如果用户是游客/来宾（VIP等级<1），显示提示
+  if (userVipLevel.value < 1) {
+    uni.showModal({
+      title: '提示',
+      content: '充值即可升级为会员',
+      confirmText: '立即充值',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          // 用户点击确认，跳转到充值页面
+          console.log('[bc-bottom-bar] 跳转充值页面:', props.rechargeUrl);
+          uni.navigateTo({
+            url: props.rechargeUrl,
+          });
+        }
+      }
+    });
+    return;
+  }
+
+  // 已经是会员，直接跳转充值页面
   console.log('[bc-bottom-bar] 跳转充值页面:', props.rechargeUrl);
   uni.navigateTo({
     url: props.rechargeUrl,

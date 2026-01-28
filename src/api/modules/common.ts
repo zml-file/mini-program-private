@@ -21,5 +21,8 @@ export const COMMON = {
   getPrePayData: (data: Common.GetPrePayData.Body) => request<Common.GetPrePayData.Data>('/api/pay/getPrePayData', 'GET', data),
   // 充值金额和虚拟币的比例兑换
   exchange: (data: Common.GetPrePayData.Body) => request<Common.GetPrePayData.Data>('/api/pay/exchange', 'GET', data),
+  // 获取搜索框副标题列表
+  getPlaceholderList: (data: Common.GetPlaceholderList.Body) =>
+    request<Common.GetPlaceholderList.Data>('/api/module/getPlaceholderList', 'GET', data),
 };
 export default COMMON;

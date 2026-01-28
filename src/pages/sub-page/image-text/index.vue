@@ -17,8 +17,24 @@
             type: 'text',
           }"></bc-img-text-item>
       </block>
+
+      <!-- VIP套餐选择器 (仅当有多个可用套餐时显示) -->
+      <view v-if="availableSets.length > 1" class="set-selector">
+        <view class="selector-title">请选择图文套餐</view>
+        <view class="selector-tabs">
+          <view
+            v-for="(set, index) in availableSets"
+            :key="index"
+            class="tab-item"
+            :class="{ active: selectedSetIndex === index }"
+            @click="() => handleSelectSet(index)">
+            套餐{{ index + 1 }}
+          </view>
+        </view>
+      </view>
+
       <!-- 正常图文内容 -->
-      <block v-for="item in data.list" :key="item">
+      <block v-for="item in displayList" :key="item">
         <bc-img-text-item
           disabled
           :item="{ ...item, title: item.title }"></bc-img-text-item>
@@ -48,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { reactive, ref, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 // 接口
 import api from '@/api';
@@ -59,6 +75,7 @@ import { taskModule, payModule } from '@/utils/data';
 const data = reactive<any>({
   describe: '', // 图文说明
   list: [],
+  allSets: [], // 所有套餐数据
   value: '',
 });
 
@@ -68,6 +85,44 @@ const popup = ref<any>(null);
 const popupInfo = ref<{ type: 'create' | 'recharge'; okText?: string; text?: string; cancelText?: string }>({
   type: 'create',
 });
+const selectedSetIndex = ref(0); // 当前选中的套餐索引
+
+// VIP等级配置：不同VIP等级可访问的套餐数量
+const VIP_SET_CONFIG: Record<number, number> = {
+  0: 0, // 游客：0套
+  1: 1, // VIP1: 1套
+  2: 1, // VIP2: 1套
+  3: 2, // VIP3: 2套
+  4: 3, // VIP4: 3套
+  5: 3, // VIP5: 3套
+};
+
+// 计算可访问的套餐列表
+const availableSets = computed(() => {
+  const userLevel = userInfo.value?.userLevel || 0;
+  const maxSets = VIP_SET_CONFIG[userLevel] || 0;
+  return data.allSets.slice(0, maxSets);
+});
+
+// 计算当前显示的图文列表
+const displayList = computed(() => {
+  if (availableSets.value.length === 0) {
+    return [];
+  }
+  // 确保选中的索引在有效范围内
+  const validIndex = Math.min(selectedSetIndex.value, availableSets.value.length - 1);
+  return availableSets.value[validIndex] || [];
+});
+
+// 选择套餐
+const handleSelectSet = (index: number) => {
+  selectedSetIndex.value = index;
+  uni.showToast({
+    title: `已切换到套餐${index + 1}`,
+    icon: 'success',
+    duration: 1500
+  });
+};
 
 const handleOk = () => {
   // 充值
@@ -149,14 +204,32 @@ const checkVirtualCoin = async () => {
 const getList = async () => {
   try {
     const res = await api.task.moduleImg();
-    data.list = res.data?.moduleImgVoList.map(item => ({
+    const mappedList = res.data?.moduleImgVoList.map(item => ({
       ...item,
       title: item?.title || '图文内容',
       content: item.imgContent,
       imgs: item.imgUrlList,
       type: 'img_text',
       dataType: item.type,
-    }));
+    })) || [];
+
+    // 将图文内容按 dataType 分组成不同的套餐
+    // dataType: null 为第一套，1 为第二套，2 为第三套
+    const setMap: Record<string, any[]> = {};
+    mappedList.forEach(item => {
+      const setKey = item.dataType === null ? '0' : String(item.dataType);
+      if (!setMap[setKey]) {
+        setMap[setKey] = [];
+      }
+      setMap[setKey].push(item);
+    });
+
+    // 按照 key 排序，确保套餐顺序一致
+    const sortedKeys = Object.keys(setMap).sort((a, b) => Number(a) - Number(b));
+    data.allSets = sortedKeys.map(key => setMap[key]);
+
+    // 保留原有的 list 用于兼容性
+    data.list = mappedList;
     data.describe = res.data?.describe || '';
   } catch (error) {}
 };
@@ -181,6 +254,52 @@ onShow(() => {
 .container {
   padding: 30rpx;
   padding-bottom: calc($safe-bottom + 120rpx);
+}
+
+/* 套餐选择器 */
+.set-selector {
+  margin: 30rpx 0;
+  padding: 24rpx;
+  background: #ffffff;
+  border: 1rpx solid #e7e7f7;
+  border-radius: 16rpx;
+  box-shadow: 0 8rpx 18rpx rgba(123, 92, 255, 0.08);
+}
+
+.selector-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+  text-align: center;
+}
+
+.selector-tabs {
+  display: flex;
+  gap: 16rpx;
+  justify-content: center;
+}
+
+.tab-item {
+  flex: 1;
+  max-width: 200rpx;
+  padding: 16rpx 24rpx;
+  text-align: center;
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #666;
+  background: #f5f5f5;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  transition: all 0.3s;
+}
+
+.tab-item.active {
+  color: #fff;
+  background: linear-gradient(180deg, #9AB3FF 0%, #7A59ED 100%);
+  border-color: #7A59ED;
+  box-shadow: 0 6rpx 14rpx rgba(123, 92, 255, 0.3);
+  font-weight: 600;
 }
 
 /* 底部固定大按钮（与 offline/list 保持一致风格） */
