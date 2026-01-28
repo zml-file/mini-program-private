@@ -87,6 +87,17 @@ export namespace Common {
       timeStamp: string;
     }
   }
+
+  // 获取搜索框副标题列表
+  namespace GetPlaceholderList {
+    interface Body {
+      moduleCode: ModuleCode; // 模块code
+    }
+    interface Data {
+      subtitles: string[]; // 副标题列表
+      updateInterval: number; // 更新间隔（小时）
+    }
+  }
 }
 
 // 线下任务

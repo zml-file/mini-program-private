@@ -153,22 +153,31 @@ interface ClipboardState {
 
 const VERSION = 1;
 
+// Module prefix for storage isolation
+let modulePrefix = 'fm'; // default: familiar module
+
 // Storage helpers
 const get = (k: string) => {
   try {
-    return uni.getStorageSync(k);
+    // Replace 'fm:' prefix with current module prefix
+    const key = k.replace(/^fm:/, `${modulePrefix}:`);
+    return uni.getStorageSync(key);
   } catch {
     return null;
   }
 };
 const set = (k: string, v: any) => {
   try {
-    uni.setStorageSync(k, v);
+    // Replace 'fm:' prefix with current module prefix
+    const key = k.replace(/^fm:/, `${modulePrefix}:`);
+    uni.setStorageSync(key, v);
   } catch {}
 };
 const remove = (k: string) => {
   try {
-    uni.removeStorageSync(k);
+    // Replace 'fm:' prefix with current module prefix
+    const key = k.replace(/^fm:/, `${modulePrefix}:`);
+    uni.removeStorageSync(key);
   } catch {}
 };
 
@@ -574,7 +583,20 @@ function initDefaults() {
 
 // Public APIs
 
-export function initFamiliarLocal() {
+/**
+ * Initialize familiar local storage
+ * @param module - Module type: 'familiar' (熟悉), 'super' (超熟), 'free' (免费)
+ */
+export function initFamiliarLocal(module: 'familiar' | 'super' | 'free' = 'familiar') {
+  // Set module prefix based on module type
+  if (module === 'free') {
+    modulePrefix = 'free';
+  } else if (module === 'super') {
+    modulePrefix = 'super';
+  } else {
+    modulePrefix = 'fm'; // default: familiar
+  }
+
   initDefaults();
 }
 
