@@ -445,7 +445,8 @@ export namespace Four {
       contentDetail: string;
       contentType: number;
       status: number;
-      type: number;
+      type: number | null;
+      warehouseName: string;
     }
 
     export type Data = ContentItem[];

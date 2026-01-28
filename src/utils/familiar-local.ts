@@ -5,6 +5,8 @@
  */
 
 import { getCountdownTimeMs, getCountdownDays, getCountdownHours, getCountdownMinutes } from '@/config';
+import { getLocalContentLibrary, type ParsedContentLibrary, type ContentNode, type Library } from './content-library-sync';
+import { WAREHOUSE_TYPE_MAP } from './content-library-parser';
 
 type StageIndex = 0 | 1 | 2 | 3 | 4;
 type DurationDays = 5 | 9 | 16;
@@ -1425,34 +1427,173 @@ export async function savePoint(taskId: string, stepNum = 0): Promise<void> {
 
 export async function getMockContentByLibrary(taskId: string, libraryName: string): Promise<any> {
   initDefaults();
-  const libs: Libs = get("fm:libs");
-  let contentList: ChainNode[] = [];
-  
-  // 根据库名获取内容
-  switch (libraryName) {
-    case 'content':
-      contentList = libs.content?.S1?.[0] || [];
-      break;
-    case 'opening':
-      contentList = libs.opening?.S1?.[0] || [];
-      break;
-    case 'leaving':
-      contentList = libs.leaving?.S1?.[0] || [];
-      break;
-    case 'opponent':
-      contentList = libs.opponent?.S2?.[0] || [];
-      break;
-    case 'qa':
-      contentList = libs.qa?.S1?.[0]?.answerChain || [];
-      break;
-    default:
-      contentList = [];
+
+  // 优先从已同步的 content_library_data 获取数据
+  const syncedData = getLocalContentLibrary();
+
+  if (syncedData && syncedData.data) {
+    const parsedData = syncedData.data as ParsedContentLibrary;
+    const result = getContentFromSyncedData(parsedData, libraryName);
+    if (result.length > 0) {
+      console.log(`[getMockContentByLibrary] 从同步数据获取 ${libraryName}:`, result.length, '个节点');
+      return {
+        contentList: result,
+        statusVo: { sign: result[0]?.type === 'Z' || result[0]?.type === 'AZ' ? 'Z' : '' }
+      };
+    }
   }
-  
+
+  // 降级到本地mock数据
+  console.log(`[getMockContentByLibrary] 同步数据无匹配，使用本地mock: ${libraryName}`);
+  const localLibs: Libs = get("fm:libs");
+  let contentList: ChainNode[] = [];
+
+  // 解析库名，支持 "内容库S1", "content", "S1" 等格式
+  const warehouseInfo = parseWarehouseNameLocal(libraryName);
+
+  if (warehouseInfo) {
+    const { category, libId } = warehouseInfo;
+    if (category === 'qa') {
+      contentList = (localLibs.qa?.[libId]?.[0] as any)?.answerChain || [];
+    } else {
+      const libGroup = localLibs[category] as Record<string, Chain[]>;
+      contentList = libGroup?.[libId]?.[0] || [];
+    }
+  } else {
+    switch (libraryName) {
+      case 'content':
+        contentList = localLibs.content?.S1?.[0] || [];
+        break;
+      case 'opening':
+        contentList = localLibs.opening?.S1?.[0] || [];
+        break;
+      case 'leaving':
+        contentList = localLibs.leaving?.S1?.[0] || [];
+        break;
+      case 'opponent':
+        contentList = localLibs.opponent?.S2?.[0] || [];
+        break;
+      case 'qa':
+        contentList = (localLibs.qa?.S1?.[0] as any)?.answerChain || [];
+        break;
+      default:
+        contentList = [];
+    }
+  }
+
   return {
     contentList: contentList,
     statusVo: { sign: '' }
   };
+}
+
+/**
+ * 从已同步的 ParsedContentLibrary 数据中提取内容
+ */
+function getContentFromSyncedData(data: ParsedContentLibrary, libraryName: string): ChainNode[] {
+  // 解析库名
+  const warehouseInfo = parseWarehouseNameLocal(libraryName);
+
+  if (!warehouseInfo) {
+    // 简单名称匹配
+    const simpleMap: Record<string, { libs: Record<string, Library>; defaultKey: string }> = {
+      'content': { libs: data.contentLibraries, defaultKey: 'content_1' },
+      'opening': { libs: data.contentLibraries, defaultKey: 'content_0' },
+      'leaving': { libs: data.leaveLibraries, defaultKey: 'leave_31' },
+      'opponent': { libs: data.proactiveLibraries, defaultKey: 'proactive_47' },
+    };
+
+    const mapping = simpleMap[libraryName];
+    if (mapping) {
+      const lib = mapping.libs[mapping.defaultKey];
+      if (lib) {
+        return convertContentNodesToChainNodes(lib.contents);
+      }
+    }
+    return [];
+  }
+
+  // 根据类别查找对应的库
+  const { category, libId } = warehouseInfo;
+  let targetLibs: Record<string, Library>;
+
+  switch (category) {
+    case 'content':
+    case 'opening':
+      targetLibs = data.contentLibraries;
+      break;
+    case 'leaving':
+      targetLibs = data.leaveLibraries;
+      break;
+    case 'opponent':
+      targetLibs = data.proactiveLibraries;
+      break;
+    default:
+      return [];
+  }
+
+  // 查找匹配的库（通过 warehouseName 或 libraryId）
+  for (const [key, lib] of Object.entries(targetLibs)) {
+    // 匹配库名包含 libId 的情况，如 "内容库S1" 匹配 libId="S1"
+    if (lib.libraryName.includes(libId) || key.includes(libId.replace('S', ''))) {
+      return convertContentNodesToChainNodes(lib.contents);
+    }
+  }
+
+  return [];
+}
+
+/**
+ * 将 ContentNode[] 转换为 ChainNode[]
+ */
+function convertContentNodesToChainNodes(contents: ContentNode[]): ChainNode[] {
+  return contents.map((node, index) => {
+    // 根据 symbol 确定 type
+    let nodeType: ChainNodeType = 'text';
+    if (node.symbol === 'Z') nodeType = 'Z';
+    else if (node.symbol === 'AZ') nodeType = 'AZ';
+    else if (node.symbol === 'D') nodeType = 'D';
+    else if (node.symbol === 'AD') nodeType = 'AD';
+
+    return {
+      id: node.id,
+      text: node.text,
+      type: nodeType,
+      splitBy: node.symbol === '@' ? '@' : undefined
+    };
+  });
+}
+
+/**
+ * 解析库名（本地版本，避免与之前的函数冲突）
+ */
+function parseWarehouseNameLocal(warehouseName: string): { category: 'opening' | 'content' | 'leaving' | 'opponent' | 'qa'; libId: string } | null {
+  if (!warehouseName) return null;
+
+  const patterns: { regex: RegExp; category: 'opening' | 'content' | 'leaving' | 'opponent' | 'qa' }[] = [
+    { regex: /^开库[S]?(\d+\.?\d*)$/i, category: 'opening' },
+    { regex: /^内容库[S]?(\d+\.?\d*)$/i, category: 'content' },
+    { regex: /^离库[S]?(\d+\.?\d*)$/i, category: 'leaving' },
+    { regex: /^对主动库[S]?(\d+\.?\d*)$/i, category: 'opponent' },
+    { regex: /^问答库[S]?(\d+\.?\d*)$/i, category: 'qa' },
+  ];
+
+  for (const { regex, category } of patterns) {
+    const match = warehouseName.match(regex);
+    if (match) {
+      const num = match[1] || '1';
+      const libId = num.includes('.') ? `S${num.replace('.', '_')}` : `S${num}`;
+      return { category, libId: libId.replace('_', '.') };
+    }
+  }
+
+  // 兼容 "S1", "S2" 等简写格式
+  const simpleMatch = warehouseName.match(/^[S]?(\d+\.?\d*)$/i);
+  if (simpleMatch) {
+    return { category: 'content', libId: `S${simpleMatch[1]}` };
+  }
+
+  return null;
 }
 
 export async function getNextChainContent(taskId: string): Promise<any> {
