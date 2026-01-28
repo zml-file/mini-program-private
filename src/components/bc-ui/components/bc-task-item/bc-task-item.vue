@@ -5,7 +5,12 @@
       :left-options="leftOptions"
       :right-options="rightOptions"
       @click="onSwipeClick">
-      <view class="list" @click="onClick">
+      <view
+        class="list"
+        hover-class="hover-gray"
+        :hover-start-time="20"
+        :hover-stay-time="70"
+        @click="onClick">
         <view class="left_arrow">
           <md-icon :name="getLeftArrowIcon" width="80" height="80">
             <view class="text">{{ tag }}</view>

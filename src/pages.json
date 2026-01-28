@@ -5,8 +5,8 @@
       "title": "任务列表"
     },
     {
-      "path": "pages/describe/index",
-      "title": "说明"
+      "path": "pages/image-text/index",
+      "title": "图文模块"
     },
     {
       "path": "pages/index/index",
@@ -210,7 +210,7 @@
         "text": "对话列表"
       },
       {
-        "pagePath": "pages/describe/index",
+        "pagePath": "pages/image-text/index",
         "text": "AO"
       },
       {

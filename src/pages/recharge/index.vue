@@ -17,12 +17,23 @@
       </view>
       <view class="list">
         <block v-for="item in data.list" :key="item.gold">
-          <view :class="['item', data.current === item.gold ? 'active' : '']" @click="() => handleSelect(item)">
+          <view
+            :class="['item', data.current === item.gold ? 'active' : '']"
+            hover-class="hover-gray"
+            :hover-start-time="20"
+            :hover-stay-time="70"
+            @click="() => handleSelect(item)">
             <view>{{ item.gold }}金币</view>
             <view class="price">￥{{ item.price }}</view>
           </view>
         </block>
-        <view class="item" style="justify-content: center" @click="() => handleSelect('custom')">自定义</view>
+        <view
+          class="item"
+          style="justify-content: center"
+          hover-class="hover-gray"
+          :hover-start-time="20"
+          :hover-stay-time="70"
+          @click="() => handleSelect('custom')">自定义</view>
       </view>
       <!-- 协议 及 充值按钮 -->
       <view class="bottom-btns">
@@ -164,6 +175,9 @@ onShow(() => {
 <style lang="scss" scoped>
 .container {
   padding: 20px;
+  padding-bottom: calc(200rpx + $safe-bottom);
+  min-height: 100vh;
+  box-sizing: border-box;
   .info {
     background-color: #f5ee9e;
     height: 144rpx;
@@ -216,12 +230,13 @@ onShow(() => {
 .bottom_bg {
   background-repeat: no-repeat;
   background-size: cover;
-  background-position: center;
-  width: 750rpx;
-  height: 1224rpx;
-  position: absolute;
-  bottom: -($safe-bottom);
+  background-position: center bottom;
+  width: 100%;
+  height: 100vh;
+  position: fixed;
+  bottom: 0;
   left: 0;
   z-index: -1;
+  pointer-events: none;
 }
 </style>

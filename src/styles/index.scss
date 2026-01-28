@@ -77,3 +77,16 @@ uni-page-body {
 .shadow {
 	box-shadow: 0 6rpx 10rpx 0 rgba(61, 100, 140, 0.04);
 }
+
+/* 全局点击效果类 - 参考微信灰色效果 */
+.hover-gray {
+	background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.hover-opacity {
+	opacity: 0.7;
+}
+
+.hover-darken {
+	filter: brightness(0.9);
+}

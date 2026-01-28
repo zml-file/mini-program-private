@@ -1,5 +1,11 @@
 <template>
-  <button :class="['md-button', bgType === 'dark' ? 'dark_bg' : '']" :loading="props.loading" @click="$emit('click')">
+  <button
+    :class="['md-button', bgType === 'dark' ? 'dark_bg' : '']"
+    :loading="props.loading"
+    hover-class="md-button-hover"
+    :hover-start-time="20"
+    :hover-stay-time="70"
+    @click="$emit('click')">
     {{ props.title }}
   </button>
 </template>
@@ -29,5 +35,15 @@ let props = defineProps<{
   }
   color: white;
   font-size: 32rpx;
+}
+
+/* 点击效果 */
+.md-button-hover {
+  opacity: 0.8;
+  background-color: rgba(122, 89, 237, 0.8) !important;
+}
+
+.md-button.dark_bg.md-button-hover {
+  opacity: 0.9;
 }
 </style>

@@ -39,7 +39,7 @@
 import { reactive, ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 // 接口
-import { initFamiliarLocal, getTask, saveQuestionnaireAnswer, submitQuestionnaire } from '@/utils/familiar-local';
+import { initFamiliarLocal, getTask, saveQuestionnaireAnswer, submitQuestionnaire, deleteTask } from '@/utils/familiar-local';
 import { getCountdownTimeMs } from '@/config';
 import type { Task } from '@/api/data';
 // 工具
@@ -126,7 +126,13 @@ const handleOk = () => {
       moduleUserQuestionList,
     });
   } else {
-    // 返回
+    // 返回：删除未提交问卷的任务
+    const taskId = data.prevPageQuery?.taskId;
+    if (taskId) {
+      initFamiliarLocal();
+      deleteTask(taskId);
+      console.log('[Questionnaire] 问卷未提交，已删除任务:', taskId);
+    }
     uni.navigateBack();
   }
 };

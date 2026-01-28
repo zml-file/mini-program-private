@@ -489,8 +489,8 @@ const fetchCreateTask = async (params: Pick<Task.Create.Body, 'taskName'>) => {
       sm.initSmLocal();
       const res = sm.createTask({ name, durationDays: 5 });
       if (res.ok && res.task) {
-        // 使用 round-new.vue（round-local 编译有问题，复制一份）
-        uni.navigateTo({ url: `/pages/sub-page/stepTask/round-new?taskId=${res.task.id}&taskName=${params?.taskName}&module=陌生模块` });
+        // 陌生模块使用专用页面 round-stranger.vue
+        uni.navigateTo({ url: `/pages/sub-page/stepTask/round-stranger?taskId=${res.task.id}&taskName=${encodeURIComponent(params?.taskName || '')}&module=陌生模块` });
       } else {
         uni.showToast({ title: res.reason || '创建失败', icon: 'none' });
         data.loading = false;
