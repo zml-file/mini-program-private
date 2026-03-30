@@ -1,11 +1,11 @@
 <template>
   <md-page :title="data.prevPageQuery?.taskName">
     <view class="container">
-      <bc-countdown desc="倒计时结束后，将显示情况描述、问题分析和解决方案" :time="data.time" />
+      <bc-countdown desc="倒计时结束后，将显示情况描述、问题分析和解决方案" :time="data.time" @timeup="handleTimeup" />
       <block v-for="item in data.list" :key="item.id">
-        <bc-title-card :item="item"></bc-title-card>
+        <bc-title-card :item="item" color="purple"></bc-title-card>
       </block>
-      <bc-bottom-bar rightBtn okText="详细问诊" @ok="handleOk" @back="handleBack" :okDisabled="data.disabled" />
+      <bc-bottom-bar rightBtn okText="详细问诊" @ok="handleOk" @back="handleBack" :showOk="!data.disabled" />
     </view>
   </md-page>
 </template>
@@ -21,14 +21,18 @@ const data = reactive<any>({
   prevPageQuery: {}, // 上一个页面带过来的参数
   list: [],
   time: '',
-  disabled: false,
+  disabled: true, // 默认禁用，倒计时结束后启用
 });
 
+const handleTimeup = () => {
+  // 倒计时结束，启用按钮并跳转
+  data.disabled = false;
+  uni.redirectTo({
+    url: `/pages/sub-page/wenzhen/scheme?taskId=${data.prevPageQuery.taskId}&taskName=${data.prevPageQuery?.taskName}`,
+  });
+};
+
 const handleOk = () => {
-  if (data.disabled) {
-    Toast('倒计时未结束，请在倒计时结束后点击详细问诊');
-    return;
-  }
   uni.navigateTo({
     url: `/pages/sub-page/wenzhen/detail?taskId=${data.prevPageQuery.taskId}&taskName=${data.prevPageQuery?.taskName}`,
   });
@@ -98,6 +102,9 @@ onLoad(option => {
 .container {
   padding: 30rpx;
   padding-bottom: calc($safe-bottom + 120rpx);
+  background: linear-gradient(180deg, #f5f0ff 0%, #ffffff 100%);
+  min-height: 100vh;
+
   .countdown {
     display: flex;
     align-items: center;
@@ -110,8 +117,8 @@ onLoad(option => {
       padding: 4rpx 16rpx;
       box-sizing: border-box;
       border-radius: 8rpx;
-      background: #fdedea;
-      color: #c98c59;
+      background: #EAE4FF;
+      color: #7A59ED;
       font-size: 16rpx;
     }
   }

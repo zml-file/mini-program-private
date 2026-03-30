@@ -15,8 +15,8 @@
         <y-tab v-for="tab in data.tabs" :title="tab.label" :key="tab.key">
           <view class="content m-top-30">
             <bc-qa-list
-              :data="getDataBy2D(data.list, tab.key)"
-              :submitList="data.submitList[tab.key]?.moduleUserQuestionList" />
+              :data="getDataBy2D(data.list || [], tab.key) || []"
+              :submitList="data.submitList?.[tab.key]?.moduleUserQuestionList || []" />
           </view>
         </y-tab>
       </y-tabs>
@@ -89,7 +89,12 @@ const handleOk = () => {
 const fetchModuleQuestionList = async () => {
   try {
     const res = await api.task.moduleQuestionList({ moduleCode: taskModule['问诊模块'] });
-    data.tabs = res.data?.map((item, index) => ({ label: item.stageName, key: index }));
+    // 固定生成三个 tab：问卷A、问卷B、问卷C
+    data.tabs = [
+      { label: '问卷A', key: 0 },
+      { label: '问卷B', key: 1 },
+      { label: '问卷C', key: 2 },
+    ];
     data.list = res.data?.map(wrap => ({
       ...wrap,
       questionVoList: wrap.questionVoList?.map(item => {
@@ -146,23 +151,26 @@ onLoad(option => {
     padding: 8rpx;
     box-sizing: border-box;
     position: sticky;
-    background: linear-gradient(90deg, #ff9d8d 0%, #ffd4cc 100%);
-    border: 1px;
+    background: linear-gradient(90deg, #9AB3FF 0%, #7A59ED 100%);
     border-radius: 24rpx;
   }
 
   .y-tabs__nav {
     height: 100%;
+    width: 100%;
+    display: flex;
     gap: 8rpx;
     white-space: nowrap;
-    width: 100%;
   }
 
   .y-tab {
-    display: inline-block;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     height: 68rpx;
     line-height: 68rpx;
-    padding: 0 48rpx;
+    padding: 0;
     box-sizing: border-box;
     border-radius: 16rpx;
     text-align: center;
@@ -171,6 +179,7 @@ onLoad(option => {
 
     &.is-active {
       background: white;
+      color: #7A59ED !important;
     }
   }
 }

@@ -39,7 +39,7 @@
 import { computed, reactive, ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 // 接口
-import { initFamiliarLocal, getTask, saveQuestionnaireAnswer, deleteTask, handleAsk1, handleAsk2 } from '@/utils/familiar-local';
+import { initFamiliarLocal, getTask, saveQuestionnaireAnswer, deleteTask, handleAsk1, handleAsk2, enterStage1 } from '@/utils/familiar-local';
 import type { Task } from '@/api/data';
 import { getDataBy2D } from '@/utils/util';
 import { ensureQuestionnaireMock } from '@/utils/fm-questionnaire-mock';
