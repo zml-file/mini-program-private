@@ -9,7 +9,7 @@
 						<view class="module-tag">{{ getModuleLabel(item.moduleType) }}</view>
 					</view>
 					<view class="date-wrap flex-l m-bottom-28" v-if="item.endTime && String(item.endTime).trim()">
-						<text class="label">下回合开启时间：</text>
+						<text class="label">{{ getTimeLabel(item) }}</text>
 						<text class="date font-bold">{{ item.endTime }}</text>
 					</view>
 					<view class="bottom">
@@ -42,6 +42,7 @@ interface TaskData {
 	moduleType: '熟悉' | '超熟' | '不熟' | '陌生' | '免费' | '定制' | '问诊' | '线下' | '图文';
 	endTime: string;
 	taskStatus?: number;
+	badge?: string; // 本地模块的倒计时类型标签
 }
 
 const data = reactive<any>({
@@ -79,6 +80,19 @@ const getModuleIcon = (type: string) => {
 		'图文': 'home/tuwen',
 	};
 	return icons[type] || 'home/shuxi';
+};
+
+const getTimeLabel = (item: TaskData) => {
+	if (item.badge === '对方找倒计时') {
+		return '对方找开启时间：';
+	}
+	if (item.badge === 'Z倒计时') {
+		return 'Z开启时间：';
+	}
+	if (item.badge === '下次聊天开启倒计时') {
+		return '下回合开启时间：';
+	}
+	return '下回合开启时间：';
 };
 
 // 处理任务跳转
@@ -267,6 +281,7 @@ const fetchTaskList = async () => {
 				taskName: t.name,
 				moduleType: '熟悉',
 				endTime: t.countdownEndAt ? new Date(t.countdownEndAt).toLocaleString() : '',
+				badge: t.badge,
 			});
 		});
 
@@ -278,6 +293,7 @@ const fetchTaskList = async () => {
 				taskName: t.name,
 				moduleType: '超熟',
 				endTime: t.countdownEndAt ? new Date(t.countdownEndAt).toLocaleString() : '',
+				badge: t.badge,
 			});
 		});
 
@@ -289,6 +305,7 @@ const fetchTaskList = async () => {
 				taskName: t.name,
 				moduleType: '免费',
 				endTime: t.countdownEndAt ? new Date(t.countdownEndAt).toLocaleString() : '',
+				badge: t.badge,
 			});
 		});
 
@@ -300,6 +317,7 @@ const fetchTaskList = async () => {
 				taskName: t.name,
 				moduleType: '不熟',
 				endTime: t.countdownEndAt ? new Date(t.countdownEndAt).toLocaleString() : '',
+				badge: t.badge,
 			});
 		});
 
@@ -311,6 +329,7 @@ const fetchTaskList = async () => {
 				taskName: t.name,
 				moduleType: '陌生',
 				endTime: t.countdownEndAt ? new Date(t.countdownEndAt).toLocaleString() : '',
+				badge: t.badge,
 			});
 		});
 

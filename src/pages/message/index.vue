@@ -107,9 +107,6 @@ onMounted(() => {
 	padding-bottom: calc(30rpx + env(safe-area-inset-bottom) + 100rpx);
 	min-height: 100vh;
 	box-sizing: border-box;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
 	background: linear-gradient(180deg, #eef0ff 0%, #f6f7ff 100%);
 
 	:deep(.uni-swipe) {
