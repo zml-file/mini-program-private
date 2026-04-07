@@ -348,7 +348,7 @@ const fetchCreateTask = async (params: Pick<Task.Create.Body, 'taskName'>) => {
   try {
     const res = await api.task.createTask({ ...params, moduleCode: taskModule['图文模块'] });
     uni.navigateTo({
-      url: `/pages/sub-page/image-text/problem?taskId=${res.data?.taskId}&taskName=${params?.taskName}`,
+      url: `/pages/sub-page/image-text/problem?taskId=${res.data?.taskId}&taskName=${encodeURIComponent(params?.taskName || '')}`,
     });
   } catch (error) {}
 };

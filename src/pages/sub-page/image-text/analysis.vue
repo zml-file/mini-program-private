@@ -255,7 +255,11 @@ const fetchDropList = async () => {
 };
 
 onLoad(option => {
-  data.prevPageQuery = option as Record<string, any>;
+  data.prevPageQuery = {
+    ...(option as Record<string, any>),
+    taskId: option?.taskId,
+    taskName: option?.taskName ? decodeURIComponent(option.taskName as string) : '',
+  };
 
   // 从路由参数中获取模块标题
   if (option?.moduleName) {
@@ -263,7 +267,7 @@ onLoad(option => {
     console.log('[图文分析] 从路由参数获取模块标题:', data.moduleTitle);
   }
 
-  getQuestionAnswerList(option?.taskId);
+  getQuestionAnswerList(data.prevPageQuery?.taskId);
   fetchDropList();
 });
 </script>

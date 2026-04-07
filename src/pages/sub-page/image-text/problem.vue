@@ -137,13 +137,16 @@ const submitQuestion = async (params: Task.SubmitQuestion.Body) => {
     // 跳转无答案页面（使用redirectTo替换当前页面，避免返回到问卷页）
     // taskName 就是模块名��（如"A0模块"），将其作为 moduleName 传递
     uni.redirectTo({
-      url: `/pages/sub-page/image-text/analysis?taskId=${data.prevPageQuery.taskId}&taskName=${data.prevPageQuery?.taskName}&moduleName=${encodeURIComponent(data.prevPageQuery?.taskName || '图文模块')}`,
+      url: `/pages/sub-page/image-text/analysis?taskId=${data.prevPageQuery.taskId}&taskName=${encodeURIComponent(data.prevPageQuery?.taskName || '')}&moduleName=${encodeURIComponent(data.prevPageQuery?.taskName || '图文模块')}`,
     });
   } catch (error) {}
 };
 
 onLoad(option => {
-  data.prevPageQuery = option as Record<string, any>;
+  data.prevPageQuery = {
+    ...(option as Record<string, any>),
+    taskName: option?.taskName ? decodeURIComponent(option.taskName as string) : '',
+  };
   getQuestionList();
 });
 
