@@ -180,12 +180,12 @@ const getRequiredLevel = (module: string) => MODULE_PERMISSIONS[module] ?? 0;
 const isFreeModule = (module: string) => module === '免费模块';
 
 const canAccessModule = (module: string) => {
-  if (isFreeModule(module)) {
-    return true;
-  }
-
   if (!isLoggedIn()) {
     return false;
+  }
+
+  if (isFreeModule(module)) {
+    return true;
   }
 
   const requiredLevel = getRequiredLevel(module);
@@ -221,18 +221,10 @@ const showModuleTip = (module?: string) => {
   }
 
   if (!isFreeModule(module) && getUserLevel() < 1) {
-    uni.showModal({
-      title: '提示',
-      content: '开启会员权限可以使用',
-      confirmText: '去充值',
-      cancelText: '取消',
-      success: (res) => {
-        if (res.confirm) {
-          uni.navigateTo({
-            url: '/pages/recharge/index',
-          });
-        }
-      }
+    uni.showToast({
+      title: '会员开启',
+      icon: 'none',
+      duration: 2000,
     });
     return;
   }
