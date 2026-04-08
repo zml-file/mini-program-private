@@ -219,6 +219,7 @@ const task = ref<any>(null);
 const userVipLevel = ref(0); // 用户VIP等级，默认游客
 const remainingVirtual = ref(0);
 const currentSearchCost = ref(100);
+const pendingHalfRestartRetry = ref(false); // 标记是否需要重试半价重启
 
 // 视图状态
 const currentView = ref<'content' | 'z' | 'd' | 'big_cd' | 'stage_cd' | 'tag_select'>('content');
@@ -339,6 +340,11 @@ onLoad((options: any) => {
   try { taskName.value = decodeURIComponent(rawName); } catch (e) { taskName.value = rawName; }
   moduleTitle.value = options.module || '';
 
+  if (uni.getStorageSync('halfRestartRetrySuccess')) {
+    uni.removeStorageSync('halfRestartRetrySuccess');
+    uni.showToast({ title: '已完成充值，任务已半价重启', icon: 'success' });
+  }
+
   // 获取用户VIP等级
   getUserVipLevel();
 
@@ -352,8 +358,34 @@ onLoad((options: any) => {
 });
 
 // 页面显示时刷新VIP等级（从充值页返回时）
-onShow(() => {
-  getUserVipLevel();
+onShow(async () => {
+  await getUserVipLevel();
+  if (pendingHalfRestartRetry.value && uni.getStorageSync('isRefresh')) {
+    pendingHalfRestartRetry.value = false;
+    uni.removeStorageSync('isRefresh');
+    if (!task.value) {
+      loadTaskData();
+    }
+    if (!task.value) {
+      uni.showToast({ title: '任务加载失败', icon: 'none' });
+      return;
+    }
+    const type = task.value.promptType || '';
+    const isUm = moduleTitle.value.includes('不熟');
+    const result = isUm ? um.handlePromptAction(taskId.value, type, 'half_restart') : sm.handlePromptAction(taskId.value, type, 'half_restart');
+    const newTaskId = (result as any)?.newTaskId;
+    if (newTaskId) {
+      const pageUrl = isUm ? '/pages/sub-page/stepTask/round-new' : '/pages/sub-page/stepTask/round-stranger';
+      uni.setStorageSync('halfRestartRetrySuccess', 1);
+      uni.redirectTo({
+        url: `${pageUrl}?taskId=${newTaskId}&taskName=${encodeURIComponent(task.value?.name || taskName.value || '对话页面')}&module=${encodeURIComponent(moduleTitle.value || '')}`,
+      });
+      return;
+    }
+    if (result && (result as any).ok === false) {
+      uni.showToast({ title: (result as any).reason || '半价重启失败', icon: 'none' });
+    }
+  }
 });
 
 // 获取用户VIP等级
@@ -1389,12 +1421,43 @@ const handlePromptClick = (key: string) => {
     isUm ? um.confirmFriendAdded(taskId.value, key === 'yes') : sm.confirmFriendAdded(taskId.value, key === 'yes');
   } else {
     try {
+      let result: any;
       if (isUm) {
         // @ts-ignore 不熟模块的提示板处理
-        um.handlePromptAction(taskId.value, type, key);
+        result = um.handlePromptAction(taskId.value, type, key);
       } else {
         // @ts-ignore 陌生模块的提示板处理
-        sm.handlePromptAction(taskId.value, type, key);
+        result = sm.handlePromptAction(taskId.value, type, key);
+      }
+      const newTaskId = result?.newTaskId;
+      if (newTaskId) {
+        const pageUrl = isUm ? '/pages/sub-page/stepTask/round-new' : '/pages/sub-page/stepTask/round-stranger';
+        uni.redirectTo({
+          url: `${pageUrl}?taskId=${newTaskId}&taskName=${encodeURIComponent(task.value?.name || taskName.value || '对话页面')}&module=${encodeURIComponent(moduleTitle.value || '')}`,
+        });
+        promptDialog.value?.close();
+        return;
+      }
+      if (result && !result.ok && result.reason) {
+        if (result.reason.includes('余额不足')) {
+          const isGuest = userVipLevel.value < 1;
+          pendingHalfRestartRetry.value = true;
+          uni.showModal({
+            title: '心币不足',
+            content: isGuest ? '充值即可升级为会员，是否立即充值？' : `您的心币余额不足，当前余额${remainingVirtual.value}心币，是否前往充值？`,
+            confirmText: isGuest ? '立即充值' : '去充值',
+            cancelText: '取消',
+            success: (res) => {
+              if (res.confirm) {
+                uni.navigateTo({ url: '/pages/recharge/index' });
+              } else {
+                pendingHalfRestartRetry.value = false;
+              }
+            }
+          });
+        } else {
+          uni.showToast({ title: result.reason, icon: 'none', duration: 2000 });
+        }
       }
     } catch (e) {
       console.error('[handlePromptClick] handlePromptAction 失败:', e);

@@ -168,6 +168,7 @@ const task = ref<any>(null);
 const userVipLevel = ref(0); // 用户VIP等级，默认游客
 const remainingVirtual = ref(0);
 const currentSearchCost = ref(100);
+const pendingHalfRestartRetry = ref(false); // 标记是否需要重试半价重启
 
 const currentView = ref<'content' | 'z' | 'd' | 'big_cd' | 'stage_cd'>('content');
 const contentList = ref<any[]>([]);
@@ -248,6 +249,30 @@ const promptButtons = ref<PromptButton[]>([
 ]);
 
 const promptConfigMap: Record<string, PromptConfig> = {
+  persist_stage1_m4: {
+    title: '第一阶段结果确认',
+    text: '当前阶段分数未达预期，是否仍然坚持继续推进到下一阶段？',
+    buttons: [
+      { label: '坚持', key: 'yes' },
+      { label: '放弃', key: 'no' },
+    ],
+  },
+  persist_stage2_m5: {
+    title: '第二阶段结果确认',
+    text: '当前阶段分数未达预期，是否仍然坚持继续推进到下一阶段？',
+    buttons: [
+      { label: '坚持', key: 'yes' },
+      { label: '放弃', key: 'no' },
+    ],
+  },
+  persist_stage3_m6: {
+    title: '第三阶段结果确认',
+    text: '当前阶段分数未达预期，是否仍然坚持继续推进到邀约阶段？',
+    buttons: [
+      { label: '坚持', key: 'yes' },
+      { label: '放弃', key: 'no' },
+    ],
+  },
   stage4_invitation_m8: {
     title: '阶段四 · 邀约选择',
     text: '请根据对方反馈选择操作：马上邀约、多聊一次或暂不选择。',
@@ -307,6 +332,11 @@ onLoad((options: any) => {
   const rawName = options.taskName || '对话页面';
   try { taskName.value = decodeURIComponent(rawName); } catch { taskName.value = rawName; }
 
+  if (uni.getStorageSync('halfRestartRetrySuccess')) {
+    uni.removeStorageSync('halfRestartRetrySuccess');
+    uni.showToast({ title: '已完成充值，任务已半价重启', icon: 'success' });
+  }
+
   // 获取用户VIP等级
   getUserVipLevel();
 
@@ -319,8 +349,32 @@ onLoad((options: any) => {
 });
 
 // 页面显示时刷新VIP等级（从充值页返回时）
-onShow(() => {
-  getUserVipLevel();
+onShow(async () => {
+  await getUserVipLevel();
+  if (pendingHalfRestartRetry.value && uni.getStorageSync('isRefresh')) {
+    pendingHalfRestartRetry.value = false;
+    uni.removeStorageSync('isRefresh');
+    if (!task.value) {
+      loadTaskData();
+    }
+    if (!task.value) {
+      uni.showToast({ title: '任务加载失败', icon: 'none' });
+      return;
+    }
+    const promptType = task.value.promptType || '';
+    const result = sm.handlePromptAction(taskId.value, promptType, 'half_restart');
+    const newTaskId = (result as any)?.newTaskId;
+    if (newTaskId) {
+      uni.setStorageSync('halfRestartRetrySuccess', 1);
+      uni.redirectTo({
+        url: `/pages/sub-page/stepTask/round-stranger?taskId=${newTaskId}&taskName=${encodeURIComponent(task.value?.name || taskName.value || '对话页面')}`,
+      });
+      return;
+    }
+    if (result && (result as any).ok === false) {
+      uni.showToast({ title: (result as any).reason || '半价重启失败', icon: 'none' });
+    }
+  }
 });
 
 // 获取用户VIP等级
@@ -788,7 +842,37 @@ const handlePromptClick = (key: string) => {
     const added = key === 'yes';
     sm.confirmFriendAdded(taskId.value, added);
   } else {
-    sm.handlePromptAction(taskId.value, type, key);
+    const result = sm.handlePromptAction(taskId.value, type, key);
+    if (result && (result as any).ok === false) {
+      const reason = (result as any).reason || '操作失败';
+      if (reason.includes('余额不足')) {
+        const isGuest = userVipLevel.value < 1;
+        pendingHalfRestartRetry.value = true;
+        uni.showModal({
+          title: '心币不足',
+          content: isGuest ? '充值即可升级为会员，是否立即充值？' : `您的心币余额不足，当前余额${remainingVirtual.value}心币，是否前往充值？`,
+          confirmText: isGuest ? '立即充值' : '去充值',
+          cancelText: '取消',
+          success: (res) => {
+            if (res.confirm) {
+              uni.navigateTo({ url: '/pages/recharge/index' });
+            } else {
+              pendingHalfRestartRetry.value = false;
+            }
+          }
+        });
+      } else {
+        uni.showToast({ title: reason, icon: 'none' });
+      }
+    }
+    const newTaskId = (result as any)?.newTaskId;
+    if (newTaskId) {
+      uni.redirectTo({
+        url: `/pages/sub-page/stepTask/round-stranger?taskId=${newTaskId}&taskName=${encodeURIComponent(task.value?.name || taskName.value || '对话页面')}`,
+      });
+      promptDialog.value?.close();
+      return;
+    }
   }
   promptDialog.value?.close();
   loadTaskData();

@@ -1,5 +1,6 @@
 import { getCountdownTimeMs } from '@/config';
 import { triggerSync } from './data-sync';
+import { deductBalance, getUserBalance } from './familiar-local';
 
 // Unfamiliar (不熟) module local engine — isolated from familiar module
 // Storage key prefix: um:
@@ -1426,6 +1427,18 @@ function halfRestartTask(taskId: string): { ok: boolean; reason?: string; newTas
   const t = getTask(taskId);
   if (!t) return { ok: false, reason: '任务不存在' };
 
+  const halfPrice = 138 * 0.5;
+  const userBalance = getUserBalance();
+  if (userBalance < halfPrice) {
+    console.log('[um.halfRestartTask] 余额不足:', { userBalance, halfPrice });
+    return { ok: false, reason: '余额不足，请先充值' };
+  }
+
+  const deductResult = deductBalance(halfPrice);
+  if (!deductResult) {
+    return { ok: false, reason: '扣费失败' };
+  }
+
   const res = createTask({
     name: t.name,
     durationDays: t.durationDays,
@@ -1444,7 +1457,12 @@ function halfRestartTask(taskId: string): { ok: boolean; reason?: string; newTas
   const ids: string[] = get('um:tasks') || [];
   set('um:tasks', ids.filter((i) => i !== taskId));
 
-  console.log('[um.halfRestartTask] 半价重启成功:', { oldTaskId: taskId, newTaskId: res.task.id });
+  console.log('[um.halfRestartTask] 半价重启成功:', {
+    oldTaskId: taskId,
+    newTaskId: res.task.id,
+    halfPrice,
+    remainingBalance: getUserBalance(),
+  });
   return { ok: true, newTaskId: res.task.id };
 }
 

@@ -1,5 +1,6 @@
 import { getCountdownTimeMs } from '@/config';
 import { triggerSync } from './data-sync';
+import { deductBalance, getUserBalance } from './familiar-local';
 
 // Stranger (陌生) module local engine — isolated from familiar module
 // Storage key prefix: sm:
@@ -125,14 +126,78 @@ export function initSmLocal() {
         'M1.5': [[
           { type: 'content', text: '我知道我们刚认识不久@但我真的觉得和你聊天很愉快@（希望你能给我一个机会，让我们继续交流&///我想我们之间还有很多可以聊的++）@你愿意吗？', splitBy: '@' },
         ]],
-        // 内容库M4 - 第四回合内容
+        // 内容库M4 - 第二阶段内容（进一步建立默契）
         'M4': [[
-          { type: 'content', text: '经过这段时间的交流，我对你有了更多的了解@（我发现你真的是一个很特别的人&///我觉得我们之间有一种特殊的默契++）@（我想我们的关系可以更进一步&///我希望能和你建立更深的联系++）', splitBy: '@' },
+          { type: 'content', text: '这几天和你聊天让我感觉挺轻松的@（你说话的方式很自然&///和你交流不会让我有压力++）@我发现我们很多想法还挺像的@有时候会期待你回我消息AZ', splitBy: '@' },
         ]],
-        // 内容库M5 - 第五回合内容（包含D模式）
+        // 内容库M4.5 - 第二阶段内容（制造熟悉感）
+        'M4.5': [[
+          { type: 'content', text: '我发现和你聊天久了以后@会慢慢记住你说过的一些小细节@（这种感觉还挺奇妙的&///会让我觉得你是个有温度的人++）@你平时也会记住别人说的话吗？AZ', splitBy: '@' },
+        ]],
+        // 内容库M5 - 第二阶段内容（轻度试探，包含D模式）
         'M5': [[
-          { type: 'content', text: '我一直在思考我们之间的关系@虽然我们认识的时间不长@但我觉得我们之间有一种特殊的感觉@（我想坦诚地告诉你我的想法&///我希望你能理解我的心意++）', splitBy: '@' },
+          { type: 'content', text: '有时候我会想@两个人能聊得来其实挺难得的@（不是每个人都能接得住彼此的话&///也不是每个人都愿意认真回应++）@所以我还挺珍惜现在这种感觉的', splitBy: '@' },
           { type: 'D' }
+        ]],
+        // 内容库M6 - 第二阶段内容（情绪价值）
+        'M6': [[
+          { type: 'content', text: '其实有时候一天挺忙的@但看到你的消息会让我放松一点@（像是有人能听懂我的表达&///也像是节奏里多了一点期待++）@你会有这种感觉吗？AZ', splitBy: '@' },
+        ]],
+        // 内容库M7 - 第二阶段内容（共鸣延展）
+        'M7': [[
+          { type: 'content', text: '我觉得舒服的关系不是刻意找话题@而是很自然就能聊下去@（哪怕只是说点小事也不会尴尬&///甚至安静一会儿也不会别扭++）@你认同这种感觉吗？AZ', splitBy: '@' },
+        ]],
+        // 内容库M8 - 第二阶段内容（建立期待）
+        'M8': [[
+          { type: 'content', text: '有时候我会突然想到你之前说的话@然后自己一个人笑出来@（可能是因为你表达挺有趣的&///也可能是我真的把你记住了++）@这种感觉其实还蛮少见的AZ', splitBy: '@' },
+        ]],
+        // 内容库M9 - 第二阶段内容（关系拉近）
+        'M9': [[
+          { type: 'content', text: '我发现我们聊天的时候@我会比平时更愿意说真实想法@（可能是因为你给人的感觉比较稳&///也可能是你不会让人有防备++）@所以和你交流会轻松很多AZ', splitBy: '@' },
+        ]],
+        // 内容库M10 - 第二阶段内容（铺垫进入下一阶段）
+        'M10': [[
+          { type: 'content', text: '最近会觉得@我们好像已经不只是随便聊聊了@（有点习惯彼此出现&///也会在意对方的反应++）@我还挺想知道@你是怎么看我们现在这种状态的AZ', splitBy: '@' },
+        ]],
+        // 特殊库M2.5 - 第二阶段完成后的过渡内容
+        'M2.5': [[
+          { type: 'content', text: '和你聊到这里@我会觉得我们之间的距离比一开始近了很多@（不是那种刻意推进的感觉&///而是自然而然地熟悉起来++）@这种变化其实让我挺在意的AZ', splitBy: '@' },
+        ]],
+        // 内容库M11 - 第三阶段内容（分享真实感受）
+        'M11': [[
+          { type: 'content', text: '聊到现在我会觉得@你是那种愿意认真回应别人的人@（这点其实挺难得的&///也会让人慢慢放下戒备++）@所以我现在跟你说话会比一开始自然很多AZ', splitBy: '@' },
+        ]],
+        // 内容库M12 - 第三阶段内容（建立情绪连接）
+        'M12': [[
+          { type: 'content', text: '有时候我会觉得@人与人之间能不能靠近@其实看的是有没有那种被理解的感觉@（而不是表面聊得多热闹&///也不是谁说得更漂亮++）@你会在意这种感觉吗？AZ', splitBy: '@' },
+        ]],
+        // 内容库M13 - 第三阶段内容（增加信任）
+        'M13': [[
+          { type: 'content', text: '我发现自己现在会愿意和你说一些更真实的话@（包括情绪，也包括想法&///这种状态平时其实不会轻易出现++）@可能因为你会让我觉得安心一点AZ', splitBy: '@' },
+        ]],
+        // 内容库M14 - 第三阶段内容（探讨关系）
+        'M14': [[
+          { type: 'content', text: '我有时会想@两个人关系变近的过程其实很微妙@（可能不是某一句话决定的&///而是很多细节慢慢积累出来的++）@你会留意这种变化吗？AZ', splitBy: '@' },
+        ]],
+        // 内容库M15 - 第三阶段内容（表达珍惜）
+        'M15': [[
+          { type: 'content', text: '我其实挺珍惜现在这种交流状态的@（不需要刻意迎合&///也不用一直猜对方在想什么++）@这种舒服的感觉并不常见AZ', splitBy: '@' },
+        ]],
+        // 内容库M16 - 第三阶段内容（共鸣与确认）
+        'M16': [[
+          { type: 'content', text: '有些话我以前不会轻易跟别人说@但和你聊天会慢慢想表达出来@（可能是因为你接得住我的情绪&///也可能是因为我开始信任你了++）@这种变化我自己也能感觉到AZ', splitBy: '@' },
+        ]],
+        // 内容库M17 - 第三阶段内容（铺垫见面）
+        'M17': [[
+          { type: 'content', text: '有时候我会觉得@如果一直只停留在聊天里好像又有点可惜@（因为很多感觉在线上说不完整&///有些氛围见面才会更真实++）@你会这样想吗？AZ', splitBy: '@' },
+        ]],
+        // 内容库M18 - 第三阶段内容（关系确认前夜）
+        'M18': [[
+          { type: 'content', text: '这段时间和你接触下来@我会觉得你和我最开始想象的不太一样@（比我预期里更真诚&///也更让人想继续了解++）@所以我对你是有好感的AZ', splitBy: '@' },
+        ]],
+        // 内容库M19 - 第三阶段内容（邀约前铺垫）
+        'M19': [[
+          { type: 'content', text: '如果只是继续这样聊下去当然也可以@但我会觉得@（有些感觉值得更进一步确认&///有些关系也许可以往前走一点点++）@所以我最近常在想我们是不是可以见一面AZ', splitBy: '@' },
         ]],
         // 第四阶段邀约内容库M20 - 马上邀约时发送
         'M20': [[
@@ -557,12 +622,25 @@ export async function getCurrentChainContent(taskId: string): Promise<{ contentL
           else if (round === 3) nextContentId = 'M3';
           else if (round === 4) nextContentId = 'M1.5';
         } else if (stage === 2) {
-          // 第二阶段：按文档使用 M3 开头，内容 M4/M5 作为占位
-          if (round === 1 || round === 2) nextContentId = 'M4';
-          else if (round === 3) nextContentId = 'M5';
+          // 第二阶段：优先使用当前回合预选的内容库，避免再次写死为 M4/M5
+          const pendingContentId = (t as any).pendingRoundContentLibId;
+          if (pendingContentId) {
+            nextContentId = pendingContentId;
+            delete (t as any).pendingRoundContentLibId;
+          } else if (round === 1 || round === 2) {
+            nextContentId = 'M4';
+          } else if (round === 3) {
+            nextContentId = 'M5';
+          }
         } else if (stage === 3) {
-          // 第三阶段：文档为 M11~M19，这里先用占位库 M4
-          nextContentId = 'M4';
+          // 第三阶段：优先使用当前回合预选的内容库
+          const pendingContentId = (t as any).pendingRoundContentLibId;
+          if (pendingContentId) {
+            nextContentId = pendingContentId;
+            delete (t as any).pendingRoundContentLibId;
+          } else {
+            nextContentId = 'M11';
+          }
         }
         if (nextContentId) {
           const next = pickChain(libs.content, nextContentId);
@@ -928,17 +1006,34 @@ export function advanceToNextRound(taskId: string) {
       return;
     }
 
-    // 根据文档 1.2.2.2-1.2.2.4 的库选择规则
+    // 第二阶段内容库：随机抽取未使用内容，不重复
+    const availableContentLibs = ['M4', 'M4.5', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10'];
+    const usedLibIds = t.usedLibIdsByStage[2] || { content: [] };
+    const usedContentIds = usedLibIds.content || [];
+    const unusedLibs = availableContentLibs.filter(lib => !usedContentIds.includes(lib));
+
     if (nextRound === 1 || nextRound === 2) {
-      // 第一、二回合相同
       openingLibId = 'M3';
-      contentLibId = 'M4'; // 这里应该是 M4.5.6.7.10 中的一个
       leavingLibId = 'M3';
+      if (unusedLibs.length > 0) {
+        const randomIndex = Math.floor(Math.random() * unusedLibs.length);
+        contentLibId = unusedLibs[randomIndex];
+      } else {
+        contentLibId = 'M4';
+      }
     } else if (nextRound === 3) {
       openingLibId = 'M2';
-      contentLibId = 'M5'; // 这里应该是 M5.6.7.10 中没被抽取过的 + M8.9
       leavingLibId = 'M3';
+      if (unusedLibs.length > 0) {
+        const randomIndex = Math.floor(Math.random() * unusedLibs.length);
+        contentLibId = unusedLibs[randomIndex];
+      } else {
+        contentLibId = 'M5';
+      }
     }
+
+    // 记录本回合预选内容库，供开库结束后准确切换
+    (t as any).pendingRoundContentLibId = contentLibId;
   }
   // ========== 第三阶段逻辑 ==========
   else if (t.stageIndex === 3) {
@@ -956,11 +1051,24 @@ export function advanceToNextRound(taskId: string) {
       return;
     }
 
-    // 根据文档 1.3.2.2-1.3.2.4 的库选择规则
-    // 所有回合都使用相同的库（文档为 M11~M19，这里先用占位库 M4）
+    // 第三阶段内容库：M11~M19 随机抽取未使用内容，不重复
+    const availableContentLibs = ['M11', 'M12', 'M13', 'M14', 'M15', 'M16', 'M17', 'M18', 'M19'];
+    const usedLibIds = t.usedLibIdsByStage[3] || { content: [] };
+    const usedContentIds = usedLibIds.content || [];
+    const unusedLibs = availableContentLibs.filter(lib => !usedContentIds.includes(lib));
+
+    if (unusedLibs.length > 0) {
+      const randomIndex = Math.floor(Math.random() * unusedLibs.length);
+      contentLibId = unusedLibs[randomIndex];
+    } else {
+      contentLibId = 'M11';
+    }
+
     openingLibId = 'M4';
-    contentLibId = 'M4';
     leavingLibId = 'M4';
+
+    // 记录本回合预选内容库，供开库结束后准确切换
+    (t as any).pendingRoundContentLibId = contentLibId;
   }
 
   // 初始化当前链：从开库开始
@@ -1248,6 +1356,18 @@ function halfRestartTask(taskId: string): { ok: boolean; reason?: string; newTas
   const t = getTask(taskId);
   if (!t) return { ok: false, reason: '任务不存在' };
 
+  const halfPrice = 138 * 0.5;
+  const userBalance = getUserBalance();
+  if (userBalance < halfPrice) {
+    console.log('[sm.halfRestartTask] 余额不足:', { userBalance, halfPrice });
+    return { ok: false, reason: '余额不足，请先充值' };
+  }
+
+  const deductResult = deductBalance(halfPrice);
+  if (!deductResult) {
+    return { ok: false, reason: '扣费失败' };
+  }
+
   const res = createTask({
     name: t.name,
     durationDays: t.durationDays,
@@ -1266,7 +1386,12 @@ function halfRestartTask(taskId: string): { ok: boolean; reason?: string; newTas
   const ids: string[] = get('sm:tasks') || [];
   set('sm:tasks', ids.filter((i) => i !== taskId));
 
-  console.log('[sm.halfRestartTask] 半价重启成功:', { oldTaskId: taskId, newTaskId: res.task.id });
+  console.log('[sm.halfRestartTask] 半价重启成功:', {
+    oldTaskId: taskId,
+    newTaskId: res.task.id,
+    halfPrice,
+    remainingBalance: getUserBalance(),
+  });
   return { ok: true, newTaskId: res.task.id };
 }
 
@@ -1301,9 +1426,18 @@ export function handlePromptAction(taskId: string, promptType: string, action: s
     case 'persist_stage2_m5': {
       if (action === 'yes') {
         clearPrompt();
-        set(`sm:task:${taskId}`, t);
-        // TODO: 回复特殊库 M2.5
-        enterStageBigCd(taskId, 3);
+        const chain = pickChain(libs.content, 'M2.5');
+        if (chain) {
+          setCurrentChain(t, 'content', 'M2.5', chain);
+          (t as any).afterSpecialLibNextStage = 3;
+          t.listBadge = '聊天任务进行中';
+          t.listCountdownEndAt = null;
+          t.lastActionAt = Date.now();
+          set(`sm:task:${taskId}`, t);
+        } else {
+          set(`sm:task:${taskId}`, t);
+          enterStageBigCd(taskId, 3);
+        }
       } else if (action === 'no') {
         clearPrompt();
         t.status = 'deleted';
@@ -1317,8 +1451,9 @@ export function handlePromptAction(taskId: string, promptType: string, action: s
     case 'persist_stage3_m6': {
       if (action === 'yes') {
         clearPrompt();
+        setStage4InvitationPrompt(t);
+        t.lastActionAt = Date.now();
         set(`sm:task:${taskId}`, t);
-        enterStageBigCd(taskId, 4);
       } else if (action === 'no') {
         // 放弃第三阶段：直接结束任务（M7/半价重开暂未实现）
         clearPrompt();
