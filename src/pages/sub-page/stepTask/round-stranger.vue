@@ -46,11 +46,15 @@
               {{ item.text }}
             </view>
           </view>
-          <view class="z-circle" @click="handleZClick">Z</view>
+          <view class="action-orb action-orb--z" @click="handleZClick">
+            <image class="action-orb__image" src="/static/images/z.png" mode="aspectFit" />
+          </view>
           <view class="z-tip">点击Z按钮开始倒计时</view>
         </template>
         <template v-else>
-          <view class="z-circle disabled">Z</view>
+          <view class="action-orb action-orb--z disabled">
+            <image class="action-orb__image" src="/static/images/z.png" mode="aspectFit" />
+          </view>
           <bc-countdown
             :key="zEndTime"
             size="medium"
@@ -64,7 +68,9 @@
 
       <!-- D 模式（占位） -->
       <view v-else-if="currentView === 'd'" class="d-view">
-        <view class="d-circle" @click="handleDClick">D</view>
+        <view class="action-orb action-orb--d" @click="handleDClick">
+          <image class="action-orb__image" src="/static/images/d.png" mode="aspectFit" />
+        </view>
         <view class="d-tip">点击D按钮，程序将给出一条新的内容</view>
       </view>
 
@@ -1160,20 +1166,6 @@ const handleCopySearch = (item: any, index: number) => {
   align-items: center;
   padding: 60rpx 0;
 
-  .z-circle,
-  .d-circle {
-    width: 200rpx;
-    height: 200rpx;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
-    font-size: 80rpx;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 40rpx;
-  }
 
   .z-tip,
   .d-tip {
@@ -1181,6 +1173,97 @@ const handleCopySearch = (item: any, index: number) => {
     color: #666;
     margin-top: 20rpx;
     text-align: center;
+  }
+}
+
+.z-view,
+.d-view {
+  .action-orb {
+    width: 248rpx;
+    height: 248rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    &.disabled {
+      opacity: 0.5;
+      filter: grayscale(1);
+    }
+  }
+}
+
+.action-orb__image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.opponent-find-pill {
+  width: 100%;
+  min-height: 88rpx;
+  padding: 0 28rpx;
+  border-radius: 26rpx;
+  background: linear-gradient(90deg, #6c65ff 0%, #8c60ff 100%);
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 600;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10rpx 20rpx rgba(107, 101, 255, 0.18);
+
+  &.disabled {
+    background: #c8c8d4;
+    color: #ffffff;
+    box-shadow: none;
+  }
+}
+
+.opponent-find-orb {
+  width: 190rpx;
+  height: 190rpx;
+  margin-top: 40rpx;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7c9da;
+  color: #111;
+  font-size: 34rpx;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  box-shadow: 0 10rpx 22rpx rgba(0, 0, 0, 0.08);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -4rpx;
+    border-radius: 50%;
+    border: 5rpx solid #111;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    transform: rotate(-8deg);
+    pointer-events: none;
+  }
+
+  &.disabled {
+    background: #d9d9df;
+    color: #ffffff;
+    box-shadow: none;
+
+    &::before {
+      border-color: #7a7a7a;
+      border-right-color: transparent;
+      border-bottom-color: transparent;
+    }
   }
 }
 

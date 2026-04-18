@@ -384,7 +384,8 @@ const submitQuestion = async (params: Task.SubmitQuestion.Body) => {
     // 3) 阈值判断：取 familiar-local 的settings.stageThresholdX["0"]（默认10）
     const settings = getScopedSettings();
     const thresholdX = (settings?.stageThresholdX && Number(settings.stageThresholdX["0"])) || 10;
-    const routed = totalScore >= thresholdX ? 'familiar' : 'stranger';
+    const passRoutedModule = currentModule.value === '超熟模块' ? 'super' : 'familiar';
+    const routed = totalScore >= thresholdX ? passRoutedModule : 'stranger';
     // 4) 持久化到任务对象 + 日志
     const tSnap = getTask(taskId);
     if (tSnap) {

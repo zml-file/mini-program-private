@@ -1,16 +1,16 @@
 {
   "pages": [
     {
+      "path": "pages/index/index",
+      "title": "首页"
+    },
+    {
       "path": "pages/task/index",
       "title": "任务列表"
     },
     {
       "path": "pages/image-text/index",
       "title": "图文模块"
-    },
-    {
-      "path": "pages/index/index",
-      "title": "首页"
     },
     {
       "path": "pages/message/index",

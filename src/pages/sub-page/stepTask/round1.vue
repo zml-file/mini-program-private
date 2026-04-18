@@ -17,15 +17,14 @@
       </block>
       <!-- 三个状态圆圈 -->
       <view class="status flex-c m-bottom-30">
-        <view class="circle_status status_z flex-c" v-if="data.stepSign === 'z'" @click="() => handleNext('z')">Z</view>
-        <view class="circle_status status_d flex-c" v-if="data.stepSign === 'd'" @click="() => handleNext('d')">D</view>
+        <view class="action-orb action-orb--z" v-if="data.stepSign === 'z'" @click="() => handleNext('z')">
+          <image class="action-orb__image" src="/static/images/z.png" mode="aspectFit" />
+        </view>
+        <view class="action-orb action-orb--d" v-if="data.stepSign === 'd'" @click="() => handleNext('d')">
+          <image class="action-orb__image" src="/static/images/d.png" mode="aspectFit" />
+        </view>
         <view
-          :class="[
-            'circle_status',
-            'status_lookfor',
-            'flex-c',
-            { disabeld: !hasItTimeOut(data.detail?.otherFindEndTime) },
-          ]"
+          :class="['opponent-find-orb', 'flex-c', { disabled: !hasItTimeOut(data.detail?.otherFindEndTime) }]"
           v-if="data.stepSign === 'lookfor'"
           @click="() => handleNext('lookfor')">
           对方找
@@ -419,34 +418,80 @@ const getUserVipLevel = async () => {
       backdrop-filter: blur(128rpx);
       font-size: 160rpx;
       font-weight: 600;
-      &.status_z {
-        background: #f7df71;
-        box-shadow: 3.2rpx 12.8rpx 12.8rpx 0 #ffd206 inset;
-        box-shadow: -3.2rpx -12.8rpx 12.8rpx 0 #ffd3070f inset;
-        box-shadow: 25.6rpx 115.2rpx 166.4rpx 0 #fccf0324;
-        box-shadow: 0 3.2rpx 6.4rpx 0 #fcd0080a inset;
-      }
-      &.status_d {
-        background: #a0bf52;
-        box-shadow: 3.2rpx 12.8rpx 12.8rpx 0 #b0f20b inset;
-        box-shadow: -3.2rpx -12.8rpx 12.8rpx 0 #b4f1190f inset;
-        box-shadow: 25.6rpx 115.2rpx 166.4rpx 0 #aced0a24;
-        box-shadow: 0 3.2rpx 6.4rpx 0 #b6fc080a inset;
-      }
       &.status_lookfor {
-        background: #eecace;
-        box-shadow: 3.2rpx 12.8rpx 12.8rpx 0 #eb4c60 inset;
-        box-shadow: -3.2rpx -12.8rpx 12.8rpx 0 #ff11110f inset;
-        box-shadow: 25.6rpx 115.2rpx 166.4rpx 0 #f42e1324;
-        box-shadow: 0 3.2rpx 6.4rpx 0 #f087870a inset;
+        background: transparent;
+        box-shadow: none;
         font-size: 48rpx;
-        &.disabeld {
-          background: #888888;
-          color: white;
-        }
       }
     }
   }
+  .status {
+    gap: 32rpx;
+    flex-wrap: wrap;
+
+    .action-orb {
+      width: 248rpx;
+      height: 248rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+
+      &:active {
+        transform: scale(0.97);
+      }
+
+      &.disabled {
+        opacity: 0.5;
+        filter: grayscale(1);
+      }
+    }
+  }
+
+  .opponent-find-orb {
+    width: 190rpx;
+    height: 190rpx;
+    border-radius: 50%;
+    position: relative;
+    background: #f7c9da;
+    color: #111;
+    font-size: 34rpx;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: center;
+    box-shadow: 0 10rpx 22rpx rgba(0, 0, 0, 0.08);
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: -4rpx;
+      border-radius: 50%;
+      border: 5rpx solid #111;
+      border-right-color: transparent;
+      border-bottom-color: transparent;
+      transform: rotate(-8deg);
+      pointer-events: none;
+    }
+
+    &.disabled {
+      background: #d9d9df;
+      color: #ffffff;
+      box-shadow: none;
+
+      &::before {
+        border-color: #7a7a7a;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+      }
+    }
+  }
+
+  .action-orb__image {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
   .btn {
     width: 460rpx;
     height: 72rpx;

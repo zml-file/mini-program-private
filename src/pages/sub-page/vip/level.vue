@@ -16,7 +16,7 @@
           <md-icon type="bg" name="apple"></md-icon>
         </view>
         <view class="user-info">
-          <text class="username">{{ data.info?.nickname || '李晓李晓' }}</text>
+          <text class="username">{{ displayNickname }}</text>
         </view>
         <view class="level-badge">
           <text>{{ currentLevelLabel }}</text>
@@ -94,6 +94,17 @@ const data = reactive<any>({
     label1: rule.label,
     label2: `${formatVirtual(rule.requirement)}心币`
   })),
+});
+
+const displayNickname = computed(() => {
+  if (data.info?.nickname) {
+    return data.info.nickname;
+  }
+  const localNickname = uni.getStorageSync('userNickname');
+  if (localNickname) {
+    return localNickname;
+  }
+  return '牛大胆';
 });
 
 const currentLevelLabel = computed(() => {

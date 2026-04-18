@@ -39,14 +39,11 @@
         <!-- 对方找按钮（大CD期间显示） -->
         <view
           v-if="showOpponentFindButton"
-          class="opponent-find-btn"
+          class="opponent-find-orb"
           :class="{ disabled: !opponentFindEnabled }"
           @click="handleOpponentFind"
         >
-          <view class="btn-text">对方找</view>
-          <view v-if="!opponentFindEnabled" class="btn-countdown">
-            {{ opponentFindCountdown }}秒后可用
-          </view>
+          对方找
         </view>
       </view>
 
@@ -61,13 +58,17 @@
             </view>
           </view>
           <!-- Z按钮 -->
-          <view class="z-circle" @click="handleZClick">Z</view>
+          <view class="action-orb action-orb--z" @click="handleZClick">
+            <image class="action-orb__image" src="/static/images/z.png" mode="aspectFit" />
+          </view>
           <view class="z-tip">点击Z按钮开始倒计时</view>
         </template>
 
         <!-- 如果有倒计时，显示倒计时 -->
         <template v-else>
-          <view class="z-circle disabled">Z</view>
+          <view class="action-orb action-orb--z disabled">
+            <image class="action-orb__image" src="/static/images/z.png" mode="aspectFit" />
+          </view>
           <bc-countdown
             size="medium"
             :time="zEndTime"
@@ -80,17 +81,19 @@
         <!-- Z期间也可以显示对方找按钮 -->
         <view
           v-if="showOpponentFindButton"
-          class="opponent-find-bar"
+          class="opponent-find-pill"
           :class="{ disabled: !opponentFindEnabled }"
           @click="handleOpponentFind"
         >
-          对方找
+          对方主动联系
         </view>
       </view>
 
       <!-- D模式页面 -->
       <view v-else-if="currentView === 'd'" class="d-view">
-        <view class="d-circle" @click="handleDClick">D</view>
+        <view class="action-orb action-orb--d" @click="handleDClick">
+          <image class="action-orb__image" src="/static/images/d.png" mode="aspectFit" />
+        </view>
         <view class="d-tip">点击D按钮，程序将给出一条新的内容</view>
       </view>
 
@@ -771,26 +774,6 @@ const handleCopySearch = (item: any, index: number) => {
   align-items: center;
   padding: 60rpx 0;
 
-  .z-circle,
-  .d-circle {
-    width: 200rpx;
-    height: 200rpx;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
-    font-size: 80rpx;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 40rpx;
-    cursor: pointer;
-    transition: transform 0.2s;
-
-    &:active {
-      transform: scale(0.95);
-    }
-  }
 
   .z-tip,
   .d-tip {
@@ -799,6 +782,33 @@ const handleCopySearch = (item: any, index: number) => {
     margin-top: 20rpx;
     text-align: center;
   }
+}
+
+.z-view,
+.d-view {
+  .action-orb {
+    width: 248rpx;
+    height: 248rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    &.disabled {
+      opacity: 0.5;
+      filter: grayscale(1);
+    }
+  }
+}
+
+.action-orb__image {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .content-view {
@@ -839,20 +849,67 @@ const handleCopySearch = (item: any, index: number) => {
   }
 }
 
-.opponent-find-btn,
-.opponent-find-bar {
-  margin-top: 40rpx;
-  background: #667eea;
+.opponent-find-pill {
+  width: 100%;
+  min-height: 88rpx;
+  padding: 0 28rpx;
+  border-radius: 26rpx;
+  background: linear-gradient(90deg, #6c65ff 0%, #8c60ff 100%);
   color: #fff;
-  padding: 24rpx 60rpx;
-  border-radius: 12rpx;
   font-size: 30rpx;
+  font-weight: 600;
   text-align: center;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10rpx 20rpx rgba(107, 101, 255, 0.18);
 
   &.disabled {
-    background: #ccc;
-    cursor: not-allowed;
+    background: #c8c8d4;
+    color: #ffffff;
+    box-shadow: none;
+  }
+}
+
+.opponent-find-orb {
+  width: 190rpx;
+  height: 190rpx;
+  margin-top: 40rpx;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7c9da;
+  color: #111;
+  font-size: 34rpx;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  box-shadow: 0 10rpx 22rpx rgba(0, 0, 0, 0.08);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -4rpx;
+    border-radius: 50%;
+    border: 5rpx solid #111;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    transform: rotate(-8deg);
+    pointer-events: none;
+  }
+
+  &.disabled {
+    background: #d9d9df;
+    color: #ffffff;
+    box-shadow: none;
+
+    &::before {
+      border-color: #7a7a7a;
+      border-right-color: transparent;
+      border-bottom-color: transparent;
+    }
   }
 }
 

@@ -63,26 +63,29 @@
       </block>
       <!-- 三个状态圆圈 -->
       <view class="status flex-c m-bottom-30">
-        <view class="circle_status status_z flex-c" v-if="data.currentStep === 'z'" @click="handleZClick">Z</view>
-        <view class="circle_status status_d flex-c" v-if="data.currentStep === 'd'" @click="handleDClick">D</view>
-        <view :class="[
-          'circle_status',
-          'status_lookfor',
-          'flex-c',
-          { disabeld: !data.canLookfor },
-        ]" v-if="data.currentStep === 'lookfor' || data.currentStep === 'stage_cd'" @click="handleLookforClick">
+        <view class="action-orb action-orb--z" v-if="data.currentStep === 'z'" @click="handleZClick">
+          <image class="action-orb__image" src="/static/images/z.png" mode="aspectFit" />
+        </view>
+        <view class="action-orb action-orb--d" v-if="data.currentStep === 'd'" @click="handleDClick">
+          <image class="action-orb__image" src="/static/images/d.png" mode="aspectFit" />
+        </view>
+        <view
+          :class="['opponent-find-orb', 'flex-c', { disabled: !data.canLookfor }]"
+          v-if="data.currentStep === 'lookfor' || data.currentStep === 'stage_cd'"
+          @click="handleLookforClick"
+        >
           对方找
         </view>
       </view>
 
       <!-- Z出现时的细长条"对方找"按钮 -->
       <view
-        class="lookfor-bar flex-c m-bottom-30"
+        class="opponent-find-pill flex-c m-bottom-30"
         v-if="data.currentStep === 'z' || data.stepSign === 'z'"
-        :class="{ disabeld: !data.canLookfor }"
+        :class="{ disabled: !data.canLookfor }"
         @click="handleLookforClick"
       >
-        对方找
+        对方主动联系
       </view>
 
       <!-- 空状态/错误提示 -->
@@ -98,8 +101,8 @@
         </view>
 
         <!-- Go按钮 -->
-        <view class="go-button" @click="handleGoButtonClick">
-          <text class="go-text">Go</text>
+        <view class="action-orb action-orb--go" @click="handleGoButtonClick">
+          <image class="action-orb__image" src="/static/images/go.png" mode="aspectFit" />
         </view>
         <view class="go-hint">点击Go按钮继续</view>
       </view>
@@ -4122,59 +4125,6 @@ const zInit = computed(() => {
       font-size: 160rpx;
       font-weight: 600;
 
-      &.status_z {
-        position: relative;
-        background: #f7df71; /* 黄色主体 */
-        color: #111;
-        &::before { /* 外圈黑边 + 右下缺口 */
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 50%;
-          background: conic-gradient(#000 0 120deg, transparent 120deg 160deg, #000 160deg 360deg);
-          -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 12rpx), #000 0);
-          mask: radial-gradient(farthest-side, transparent calc(100% - 12rpx), #000 0);
-        }
-        &::after { /* 左上高光 */
-          content: '';
-          position: absolute;
-          width: 56%;
-          height: 56%;
-          top: 16%;
-          left: 14%;
-          border-radius: 50%;
-          background: radial-gradient(circle at 25% 25%, rgba(255,255,255,.95) 0 18%, rgba(255,255,255,.35) 28%, rgba(255,255,255,0) 36%);
-          pointer-events: none;
-        }
-      }
-
-      &.status_d {
-        position: relative;
-        background: #9BE6C0; /* 绿色主体 */
-        color: #111;
-        font-size: 160rpx;
-        &::before { /* 完整黑色外圈 */
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 50%;
-          background: conic-gradient(#000 0 120deg, transparent 120deg 160deg, #000 160deg 360deg);
-          -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 12rpx), #000 0);
-          mask: radial-gradient(farthest-side, transparent calc(100% - 12rpx), #000 0);
-        }
-        &::after { /* 左上高光 */
-          content: '';
-          position: absolute;
-          width: 56%;
-          height: 56%;
-          top: 16%;
-          left: 14%;
-          border-radius: 50%;
-          background: radial-gradient(circle at 25% 25%, rgba(255,255,255,.95) 0 18%, rgba(255,255,255,.35) 28%, rgba(255,255,255,0) 36%);
-          pointer-events: none;
-        }
-      }
-
       &.status_lookfor {
         position: relative;
         background: #f7b299; // 
@@ -4219,22 +4169,97 @@ const zInit = computed(() => {
     }
   }
 
-  .lookfor-bar {
+  .opponent-find-pill {
     width: 100%;
-    height: 88rpx;
-    line-height: 88rpx;
-    border-radius: 100rpx;
+    min-height: 88rpx;
+    padding: 0 28rpx;
+    border-radius: 26rpx;
     text-align: center;
     color: #fff;
-    font-size: 32rpx;
+    font-size: 30rpx;
     font-weight: 600;
-    background: linear-gradient(90deg, #f9753d 0%, #f7b261 100%);
-    box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.12);
+    background: linear-gradient(90deg, #6c65ff 0%, #8c60ff 100%);
+    box-shadow: 0 10rpx 20rpx rgba(107, 101, 255, 0.18);
 
-    &.disabeld {
-      background: #cccccc;
+    &.disabled {
+      background: #c8c8d4;
       color: #ffffff;
+      box-shadow: none;
     }
+  }
+
+  .status {
+    gap: 32rpx;
+    flex-wrap: wrap;
+  }
+
+  .opponent-find-orb {
+    width: 190rpx;
+    height: 190rpx;
+    border-radius: 50%;
+    position: relative;
+    background: #f7c9da;
+    color: #111;
+    font-size: 34rpx;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: center;
+    box-shadow: 0 10rpx 22rpx rgba(0, 0, 0, 0.08);
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: -4rpx;
+      border-radius: 50%;
+      border: 5rpx solid #111;
+      border-right-color: transparent;
+      border-bottom-color: transparent;
+      transform: rotate(-8deg);
+      pointer-events: none;
+    }
+
+    &.disabled {
+      background: #d9d9df;
+      color: #ffffff;
+      box-shadow: none;
+
+      &::before {
+        border-color: #7a7a7a;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+      }
+    }
+  }
+
+  .action-orb {
+     width: 248rpx;
+    width: 248rpx;
+    height: 248rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    &.disabled {
+      opacity: 0.5;
+      filter: grayscale(1);
+    }
+  }
+
+  .action-orb--go {
+    width: 236rpx;
+    height: 236rpx;
+  }
+
+  .action-orb__image {
+    width: 100%;
+    height: 100%;
+    display: block;
   }
 
   .btn {
@@ -4353,41 +4378,6 @@ const zInit = computed(() => {
   }
 }
 
-.go-button {
-  width: 200rpx;
-  height: 200rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 12rpx 32rpx rgba(102, 126, 234, 0.5);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  animation: pulse 2s infinite;
-
-  &:active {
-    transform: scale(0.95);
-    box-shadow: 0 6rpx 16rpx rgba(102, 126, 234, 0.4);
-  }
-
-  .go-text {
-    font-size: 64rpx;
-    font-weight: bold;
-    color: #fff;
-    text-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.2);
-    letter-spacing: 4rpx;
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    box-shadow: 0 12rpx 32rpx rgba(102, 126, 234, 0.5);
-  }
-  50% {
-    box-shadow: 0 12rpx 40rpx rgba(102, 126, 234, 0.7);
-  }
-}
 
 .go-hint {
   margin-top: 40rpx;
