@@ -80,7 +80,7 @@ const data = reactive({});
 		}
 	}
 	.btn {
-		width: 460rpx;
+		width: 420rpx;
 		height: 72rpx;
 		line-height: 72rpx;
 		border-radius: 16rpx;

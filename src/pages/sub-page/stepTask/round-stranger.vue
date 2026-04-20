@@ -1204,7 +1204,8 @@ const handleCopySearch = (item: any, index: number) => {
 }
 
 .opponent-find-pill {
-  width: 100%;
+  width: 420rpx;
+  max-width: 100%;
   min-height: 88rpx;
   padding: 0 28rpx;
   border-radius: 26rpx;

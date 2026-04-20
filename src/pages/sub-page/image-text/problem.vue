@@ -157,4 +157,13 @@ onShow(() => {
 </script>
 
 <style lang="scss" scoped>
+.container {
+  padding: 30rpx 30rpx calc(30rpx + $safe-bottom + 48px);
+}
+
+:deep(.list) {
+  width: 88%;
+  margin-left: auto;
+  margin-right: auto;
+}
 </style>
