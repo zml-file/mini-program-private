@@ -59,10 +59,10 @@
             </view>
           </view>
           <!-- Z按钮 -->
-          <view class="action-orb action-orb--z" @click="handleZClick">
+          <view class="action-orb action-orb--z disabled">
             <image class="action-orb__image" src="/static/images/z.png" mode="aspectFit" />
           </view>
-          <view class="z-tip">点击Z按钮开始倒计时</view>
+          <view class="z-tip">倒计时已开始，请等待回复新内容</view>
         </template>
 
         <!-- 如果有倒计时，显示倒计时 -->
@@ -780,16 +780,23 @@ const loadCurrentContent = async () => {
       const segments = cleanText.split('@').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
       const totalSegments = segments.length;
 
-      // 如果所有分段都已复制完，才切换到 Z 视图
+      // 如果所有分段都已复制完，立即启动Z倒计时并切换到Z视图
       if (segmentsCopied >= totalSegments) {
-        console.log('[loadCurrentContent] 所有分段已复制完，遇到Z，切换到Z视图（显示Z按钮，但不开始倒计时）');
-        // 注意：不要在这里调用 onZEnter，应该等用户点击 Z 按钮后再调用
-        currentView.value = 'z';
-        // 清空倒计时，只显示 Z 按钮
-        zEndTime.value = '';
+        const tNow = isUm ? um.getTask(taskId.value) : sm.getTask(taskId.value);
+        const now = Date.now();
+        if (tNow?.zUnlockAt && now < tNow.zUnlockAt) {
+          currentView.value = 'z';
+          const d = new Date(tNow.zUnlockAt);
+          const pad = (n:number)=> (n<10?`0${n}`:`${n}`);
+          zEndTime.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        } else {
+          console.log('[loadCurrentContent] 所有分段已复制完，遇到Z，自动启动Z倒计时');
+          isUm ? um.onZEnter(taskId.value) : sm.onZEnter(taskId.value);
+          loadTaskData();
+          return;
+        }
       } else {
         console.log('[loadCurrentContent] 检测到Z标记，但还有未复制的分段，继续显示内容');
-        // 还有未复制的分段，继续显示内容视图
         currentView.value = 'content';
       }
     }
@@ -941,16 +948,21 @@ const handleCopy = async (item: any, index: number) => {
   });
 
   // 9. 如果所有段落都复制完了，推进到下一个节点（仅适用于第1~3阶段）
-  // 注意：如果当前内容带 Z 标记，不要在这里推进节点，应该等用户点击 Z 按钮后再推进
-  if (segmentsCopied >= totalSegments && currentSign.value !== 'Z') {
-    console.log('[handleCopy] ✅ 所有段落已复制完，推进到下一个节点');
-    isUm ? um.finishCurrentLibNode(taskId.value) : sm.finishCurrentLibNode(taskId.value);
+  // 当前内容带 Z 标记时，立即启动 Z 倒计时，不等待用户再次点击
+  if (segmentsCopied >= totalSegments) {
+    if (currentSign.value === 'Z') {
+      console.log('[handleCopy] ✅ Z节点所有段落已复制完，自动启动Z倒计时');
+      isUm ? um.onZEnter(taskId.value) : sm.onZEnter(taskId.value);
+    } else {
+      console.log('[handleCopy] ✅ 所有段落已复制完，推进到下一个节点');
+      isUm ? um.finishCurrentLibNode(taskId.value) : sm.finishCurrentLibNode(taskId.value);
 
-    const taskFinal = isUm ? um.getTask(taskId.value) : sm.getTask(taskId.value);
-    console.log('[handleCopy] 推进后任务状态:', {
-      segmentsCopied: taskFinal?.currentLibChain?.segmentsCopied,
-      nodeIndex: taskFinal?.currentLibChain?.nodeIndex,
-    });
+      const taskFinal = isUm ? um.getTask(taskId.value) : sm.getTask(taskId.value);
+      console.log('[handleCopy] 推进后任务状态:', {
+        segmentsCopied: taskFinal?.currentLibChain?.segmentsCopied,
+        nodeIndex: taskFinal?.currentLibChain?.nodeIndex,
+      });
+    }
   } else {
     console.log('[handleCopy] ⏸️ 还有段落未复制，不推进节点');
   }
@@ -963,13 +975,7 @@ const handleCopy = async (item: any, index: number) => {
 
 // 处理Z点击
 const handleZClick = () => {
-  console.log('[handleZClick] 点击Z按钮，开始倒计时');
-  const isUm = moduleTitle.value.includes('不熟');
-  // 调用 onZEnter 开始倒计时
-  isUm ? um.onZEnter(taskId.value) : sm.onZEnter(taskId.value);
-  // 刷新任务数据，显示倒计时
-  loadTaskData();
-  uni.showToast({ title: '倒计时开始，结束后将回复新内容', icon: 'none' });
+  uni.showToast({ title: '倒计时已开始，请等待回复新内容', icon: 'none' });
 };
 
 // 处理D点击

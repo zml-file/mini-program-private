@@ -886,6 +886,7 @@ export function onZEnter(taskId: string) {
   initDefaults();
   const t = getTask(taskId);
   if (!t) return;
+  if (t.zUnlockAt && Date.now() < t.zUnlockAt) return;
   const settings: Settings = get("fm:settings");
   const range = settings.cd.zDurationByStage[t.stageIndex];
   const dur = randInt(range.minMs, range.maxMs);

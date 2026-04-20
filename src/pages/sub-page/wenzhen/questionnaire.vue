@@ -23,7 +23,7 @@
     </view>
     <bc-bottom-bar showRecharge rightBtn @ok="hanldeSubmit" @back="handleBack" />
     <!-- 提示弹窗 -->
-    <md-dialog ref="popup" @ok="handleOk">
+    <md-dialog ref="popup" @ok="handleOk" :hideCancel="true">
       <view v-if="modelType === 'submit'">提交后将消耗心币以获取方案，请确认是否提交。</view>
       <view v-else>您未完成问卷填写，请确认是否要返回</view>
     </md-dialog>

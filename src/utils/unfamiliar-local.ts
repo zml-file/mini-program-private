@@ -531,6 +531,7 @@ export function finishCurrentLibNode(taskId: string) {
 export function onZEnter(taskId: string) {
   initUmLocal();
   const t = getTask(taskId); if (!t) return;
+  if (t.zUnlockAt && Date.now() < t.zUnlockAt) return;
   const settings: Settings = get('um:settings');
   const range = settings.cd.zDurationByStage[t.stageIndex] || { minMs: 10000, maxMs: 20000 };
   const dur = randInt(range.minMs, range.maxMs);

@@ -1,26 +1,26 @@
 <template>
-	<md-page title="任务列表" :showLeft="false">
-		<view class="container">
-			<view class="list" v-for="item in data.list" :key="item.taskId" @click="() => handleJump(item)">
-				<md-icon type="bg" :name="getModuleIcon(item.moduleType)" width="67.5" height="75"></md-icon>
-				<view class="right m-left-20">
-					<view class="top-row m-bottom-12">
-						<view class="title fs-32 font-bold">{{ item.taskName }}</view>
-						<view class="module-tag">{{ getModuleLabel(item.moduleType) }}</view>
-					</view>
-					<view class="date-wrap flex-l m-bottom-28" v-if="item.endTime && String(item.endTime).trim()">
-						<text class="label">{{ getTimeLabel(item) }}</text>
-						<text class="date font-bold">{{ item.endTime }}</text>
-					</view>
-					<view class="bottom">
-						<view class="btn" @click.stop.prevent="handleDelete(item.taskId, item.moduleType)">删除</view>
-						<view class="btn active" @click.stop.prevent="handleRenew(item.taskId)">充值</view>
+		<md-page title="任务列表" :showLeft="false">
+			<view class="container">
+				<view class="list" v-for="item in data.list" :key="item.taskId" @click="() => handleJump(item)">
+					<md-icon type="bg" :name="getModuleIcon(item.moduleType)" width="67.5" height="75"></md-icon>
+					<view class="right m-left-20">
+						<view class="top-row m-bottom-12">
+							<view class="title fs-32 font-bold">{{ item.taskName }}</view>
+							<view class="module-tag">{{ getModuleLabel(item.moduleType) }}</view>
+						</view>
+						<view class="date-wrap flex-l m-bottom-28" v-if="item.endTime && String(item.endTime).trim()">
+							<text class="label">{{ getTimeLabel(item) }}</text>
+							<text class="date font-bold">{{ item.endTime }}</text>
+						</view>
+						<view class="bottom">
+							<view class="btn" @click.stop.prevent="handleDelete(item.taskId, item.moduleType)">删除</view>
+							<view class="btn active" @click.stop.prevent="handleRenew(item.taskId)">充值</view>
+						</view>
 					</view>
 				</view>
 			</view>
-		</view>
-	</md-page>
-	<bottom-tab-bar :current="0" />
+		</md-page>
+		<bottom-tab-bar :current="0" />
 </template>
 
 <script setup lang="ts">
@@ -30,7 +30,6 @@ import { onLoad, onShow } from '@dcloudio/uni-app';
 import * as fm from '@/utils/familiar-local';
 import * as um from '@/utils/unfamiliar-local';
 import * as sm from '@/utils/stranger-local';
-import { hasItTimeOut } from '@/utils/util';
 import { taskModule } from '@/utils/data';
 import api from '@/api';
 import type { Task } from '@/api/data';
@@ -42,15 +41,14 @@ interface TaskData {
 	moduleType: '熟悉' | '超熟' | '不熟' | '陌生' | '免费' | '定制' | '问诊' | '线下' | '图文';
 	endTime: string;
 	taskStatus?: number;
-	badge?: string; // 本地模块的倒计时类型标签
+	badge?: string;
 }
 
 const data = reactive<any>({
 	list: [] as TaskData[],
-	isDeleting: false, // 添加删除标志位
+	isDeleting: false,
 });
 
-// 获取模块标签
 const getModuleLabel = (type: string) => {
 	const labels: Record<string, string> = {
 		'熟悉': '熟悉',
@@ -66,7 +64,6 @@ const getModuleLabel = (type: string) => {
 	return labels[type] || type;
 };
 
-// 获取模块图标
 const getModuleIcon = (type: string) => {
 	const icons: Record<string, string> = {
 		'熟悉': 'home/shuxi',
@@ -95,18 +92,14 @@ const getTimeLabel = (item: TaskData) => {
 	return '下回合开启时间：';
 };
 
-// 处理任务跳转
 const handleJump = async (item: TaskData) => {
-	// 如果正在删除，不执行跳转
 	if (data.isDeleting) {
 		return;
 	}
 
 	const { moduleType, taskId, taskName, taskStatus } = item;
 
-	// 熟悉/超熟/免费模块
 	if (['熟悉', '超熟', '免费'].includes(moduleType)) {
-		// 初始化对应的存储
 		if (moduleType === '免费') {
 			fm.initFamiliarLocal('free');
 		} else if (moduleType === '超熟') {
@@ -121,31 +114,7 @@ const handleJump = async (item: TaskData) => {
 			return;
 		}
 
-		// 根据任务状态决定跳转
-		const now = Date.now();
 		const taskStageIndex = task.stageIndex;
-
-		// 检查各种倒计时
-		if (task.opponentFindCdUnlockAt && now >= ((task.opponentFindCdUnlockAt as number) - 2000)) {
-			uni.showToast({ title: '对方找倒计时已结束', icon: 'none', duration: 2000 });
-			return;
-		}
-
-		if (task.roundCdUnlockAt && now >= ((task.roundCdUnlockAt as number) - 2000)) {
-			uni.showToast({ title: '回合倒计时未结束', icon: 'none', duration: 2000 });
-			return;
-		}
-
-		if (task.stageCdUnlockAt && now >= ((task.stageCdUnlockAt as number) - 2000)) {
-			uni.showToast({ title: '阶段倒计时未结束', icon: 'none', duration: 2000 });
-			return;
-		}
-
-		if (task.zUnlockAt && now >= ((task.zUnlockAt as number) - 2000)) {
-			uni.showToast({ title: 'Z倒计时未结束', icon: 'none', duration: 2000 });
-			return;
-		}
-
 		if (moduleType === '免费' && taskStageIndex === 0) {
 			const enterResult = fm.enterStage1(taskId);
 			if (!enterResult.ok) {
@@ -159,7 +128,6 @@ const handleJump = async (item: TaskData) => {
 		const url = taskStageIndex === 0
 			? `/pages/sub-page/stepTask/questionnaire?module=${moduleType}模块&taskId=${taskId}&taskName=${taskName}`
 			: `/pages/sub-page/stepTask/round?module=${moduleType}模块&taskId=${taskId}`;
-
 		uni.navigateTo({ url });
 		return;
 	}
@@ -170,15 +138,6 @@ const handleJump = async (item: TaskData) => {
 		const task = tasks.find(t => t.id === taskId);
 		if (!task) {
 			uni.showToast({ title: '任务不存在', icon: 'none' });
-			return;
-		}
-
-		if (task.badge === '对方找倒计时' && task.countdownEndAt && !hasItTimeOut(task.countdownEndAt)) {
-			uni.showToast({ title: '对方找倒计时未结束', icon: 'none', duration: 2000 });
-			return;
-		}
-		if (['下次聊天开启倒计时', 'Z倒计时'].includes(task.badge) && task.countdownEndAt && !hasItTimeOut(task.countdownEndAt)) {
-			uni.showToast({ title: '倒计时未结束', icon: 'none', duration: 2000 });
 			return;
 		}
 
@@ -194,15 +153,6 @@ const handleJump = async (item: TaskData) => {
 		const task = tasks.find(t => t.id === taskId);
 		if (!task) {
 			uni.showToast({ title: '任务不存在', icon: 'none' });
-			return;
-		}
-
-		if (task.badge === '对方找倒计时' && task.countdownEndAt && !hasItTimeOut(task.countdownEndAt)) {
-			uni.showToast({ title: '对方找倒计时未结束', icon: 'none', duration: 2000 });
-			return;
-		}
-		if (['下次聊天开启倒计时', 'Z倒计时'].includes(task.badge) && task.countdownEndAt && !hasItTimeOut(task.countdownEndAt)) {
-			uni.showToast({ title: '倒计时未结束', icon: 'none', duration: 2000 });
 			return;
 		}
 
@@ -267,7 +217,6 @@ const handleJump = async (item: TaskData) => {
 	}
 };
 
-// 查询所有模块的任务列表
 const fetchTaskList = async () => {
 	console.log('[TaskList] 开始查询所有模块任务列表');
 	try {
@@ -369,7 +318,6 @@ const fetchTaskList = async () => {
 	}
 };
 
-// 删除任务
 const handleDelete = (taskId: string, moduleType: TaskData['moduleType']) => {
 	data.isDeleting = true;
 	uni.showModal({
@@ -421,14 +369,11 @@ const handleDelete = (taskId: string, moduleType: TaskData['moduleType']) => {
 	});
 };
 
-// 充值续时
 const handleRenew = (taskId: string) => {
-	// 简化处理：直接提示续时成功
 	uni.showToast({ title: '续时成功', icon: 'success' });
 	fetchTaskList();
 };
 
-// 监听数据同步完成事件
 const handleDataSyncCompleted = (event: { action: string }) => {
 	console.log('[TaskList] 收到数据同步完成事件:', event.action);
 	fetchTaskList();
@@ -461,9 +406,9 @@ onUnmounted(() => {
 		box-shadow: 0 12rpx 32rpx rgba(36,36,36,0.08);
 		display: flex;
 		align-items: flex-start;
-		padding: 24rpx 32rpx 24rpx 24rpx; /* 右侧留更多内边距 */
+		padding: 24rpx 32rpx 24rpx 24rpx;
 		box-sizing: border-box;
-		overflow: hidden; /* 防止子元素超出圆角边框 */
+		overflow: hidden;
 		&:not(:last-of-type) {
 			margin-bottom: 20rpx;
 		}
@@ -507,7 +452,7 @@ onUnmounted(() => {
 				display: flex;
 				align-items: center;
 				gap: 8rpx;
-				white-space: normal; /* 单独一行显示，不与特权同一行 */
+				white-space: normal;
 				flex-wrap: wrap;
 				.label {
 					color: #9aa0a6;

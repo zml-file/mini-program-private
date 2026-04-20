@@ -46,10 +46,10 @@
               {{ item.text }}
             </view>
           </view>
-          <view class="action-orb action-orb--z" @click="handleZClick">
+          <view class="action-orb action-orb--z disabled">
             <image class="action-orb__image" src="/static/images/z.png" mode="aspectFit" />
           </view>
-          <view class="z-tip">点击Z按钮开始倒计时</view>
+          <view class="z-tip">倒计时已开始，请等待回复新内容</view>
         </template>
         <template v-else>
           <view class="action-orb action-orb--z disabled">
@@ -772,9 +772,7 @@ const handleCopy = (item: any, index?: number) => {
 };
 
 const handleZClick = () => {
-  sm.onZEnter(taskId.value);
-  loadTaskData();
-  uni.showToast({ title: '倒计时开始，结束后将回复新内容', icon: 'none' });
+  uni.showToast({ title: '倒计时已开始，请等待回复新内容', icon: 'none' });
 };
 
 const handleDClick = () => {

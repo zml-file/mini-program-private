@@ -697,6 +697,22 @@ const loadTaskData = () => {
       return;
     }
     
+    if (task.zUnlockAt && now < (task.zUnlockAt as number)) {
+      const d = new Date(task.zUnlockAt as number);
+      const pad = (n:number)=> (n<10?`0${n}`:`${n}`);
+      data.currentStep = 'z';
+      data.stepSign = 'z';
+      data.cdMsg = '对话进行中倒计时，结束后将补全当前链条并进入下一节点';
+      data.zEndTimeStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      data.detail = {
+        ...(data.detail || {}),
+        endTime: data.zEndTimeStr,
+        stageNum: task.stageIndex,
+        roundNum: task.roundIndex || 0
+      };
+      return;
+    }
+
     // 离库恢复：若存在离库UI恢复数据，则优先还原离库并行展示
     try {
       const restore = uni.getStorageSync(getScopedLeavingKey(data.taskId));
@@ -952,11 +968,10 @@ const loadCurrentRoundContent = () => {
     // 检查第一个节点是否是Z或D
     const firstNode = randomChain[0];
     if (firstNode.type === 'Z' || firstNode.type === 'AZ') {
-      // 第一个节点是Z，显示Z按钮
-      data.currentStep = 'z';
-      data.zEndTime = Date.now() + task.stage1.zTimerMs;
+      // 第一个节点是Z，自动进入Z倒计时
       data.currentChain = randomChain;
       data.currentChainIndex = 0;
+      startZCountdown();
     } else if (firstNode.type === 'D' || firstNode.type === 'AD') {
       // 第一个节点是D，显示D按钮
       data.currentStep = 'd';
@@ -1177,12 +1192,26 @@ const handleLookforClick = async () => {
   startLookforCountdown();
 };
 
+const startZCountdown = () => {
+  onZEnter(data.taskId);
+  const task = getTask(data.taskId);
+  if (!task?.zUnlockAt) return;
+  const d = new Date(task.zUnlockAt as number);
+  const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+  data.currentStep = 'z';
+  data.stepSign = 'z';
+  data.zEndTimeStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  data.cdMsg = '对话进行中倒计时，结束后将补全当前链条并进入下一节点';
+  data.detail = {
+    ...(data.detail || {}),
+    endTime: data.zEndTimeStr,
+    stepType: 'z'
+  };
+};
+
 // 处理Z按钮点击
 const handleZClick = () => {
-  console.log('[round] Z按钮点击');
-  const task = getTask(data.taskId);
-  const ms = task?.stage1?.zTimerMs || 2 * 60 * 1000;
-  setZByDuration(ms);
+  uni.showToast({ title: '倒计时已开始，请等待回复新内容', icon: 'none' });
 };
 
 // 处理D按钮点击
@@ -1291,6 +1320,15 @@ const handleDClick = () => {
 // Z倒计时结束处理
 const zTimeup = () => {
   console.log('[round] Z倒计时结束');
+  const task = getTask(data.taskId) as any;
+  if (task) {
+    task.zUnlockAt = null;
+    task.listCountdownEndAt = null;
+    task.listBadge = '聊天任务进行中';
+    uni.setStorageSync(getScopedTaskKey(data.taskId), task);
+  }
+  data.zEndTimeStr = '';
+  data.stepSign = 'normal';
   // Z倒计时结束，移动到下一个节点
   moveToNextNode();
 };
@@ -1617,9 +1655,7 @@ const handleCopy = (item: any) => {
       const currentId = item.stepDetailId;
       const shouldEnterZAfterCopy = !!azMap[currentId];
       if (shouldEnterZAfterCopy) {
-        const task = getTask(data.taskId);
-        const ms = task?.stage1?.zTimerMs || 2 * 60 * 1000;
-        setZByDuration(ms);
+        startZCountdown();
         console.log('[round] 复制@后半句完成，进入Z倒计时，结束时间:', data.zEndTimeStr);
         return;
       }
@@ -1711,7 +1747,7 @@ const handleCopy = (item: any) => {
         const hasAZTail = /AZ\s*$/i.test(trimmedSegment) || /）AZ\s*$/i.test(trimmedSegment);
 
         if (hasZTail || hasAZTail) {
-          // 以Z/AZ符号结尾，清理尾部符号后展示内容，并显示Z按钮
+          // 以Z/AZ符号结尾，清理尾部符号后展示内容，并立即启动Z倒计时
           const cleanedContent = trimmedSegment.replace(/）?(A)?Z\s*$/i, '').trim();
 
           data.pageInfo = {
@@ -1725,11 +1761,8 @@ const handleCopy = (item: any) => {
             }]
           };
 
-          // 显示Z按钮（用户点击后才进入倒计时）
-          // 注意：这里只设置 currentStep = 'z'，清空 zEndTimeStr，所以不会显示倒计时
-          data.currentStep = 'z';
-          data.zEndTimeStr = ''; // 清空倒计时，只显示Z按钮
-          console.log('[round] 检测到Z/AZ结尾，展示内容并显示Z按钮（等待用户点击）');
+          startZCountdown();
+          console.log('[round] 检测到Z/AZ结尾，展示内容并自动启动Z倒计时');
           return;
         }
         
@@ -1858,12 +1891,9 @@ const moveToNextNode = () => {
     const nextNode = data.currentChain[data.currentChainIndex];
     
     if (nextNode.type === 'Z' || nextNode.type === 'AZ') {
-      // 下一个节点是Z，进入Z模式
-      const task = getTask(data.taskId);
-      if (task && task.stage1) {
-        data.zEndTime = Date.now() + task.stage1.zTimerMs;
-      }
-      data.currentStep = 'z';
+      // 下一个节点是Z，自动进入Z倒计时
+      data.currentChain = data.currentChain;
+      startZCountdown();
     } else if (nextNode.type === 'D' || nextNode.type === 'AD') {
       // 下一个节点是D，进入D模式
       data.currentStep = 'd';

@@ -453,7 +453,7 @@ export function copySegment(taskId: string): { ok: boolean; reason?: string } {
 
 export function finishCurrentLibNode(taskId: string) { initSmLocal(); const t = getTask(taskId); if (!t || !t.currentLibChain) return; t.currentLibChain.nodeIndex += 1; t.currentLibChain.segmentsCopied = 0; t.lastActionAt = Date.now(); set(`sm:task:${taskId}`, t) }
 
-export function onZEnter(taskId: string) { initSmLocal(); const t = getTask(taskId); if (!t) return; const settings: Settings = get('sm:settings'); const range = settings.cd.zDurationByStage[t.stageIndex] || { minMs: 10000, maxMs: 20000 }; const dur = randInt(range.minMs, range.maxMs); t.zUnlockAt = Date.now() + dur; t.listBadge = 'Z倒计时'; t.listCountdownEndAt = t.zUnlockAt; set(`sm:task:${taskId}`, t) }
+export function onZEnter(taskId: string) { initSmLocal(); const t = getTask(taskId); if (!t) return; if (t.zUnlockAt && Date.now() < t.zUnlockAt) return; const settings: Settings = get('sm:settings'); const range = settings.cd.zDurationByStage[t.stageIndex] || { minMs: 10000, maxMs: 20000 }; const dur = randInt(range.minMs, range.maxMs); t.zUnlockAt = Date.now() + dur; t.listBadge = 'Z倒计时'; t.listCountdownEndAt = t.zUnlockAt; set(`sm:task:${taskId}`, t) }
 export function onDEnter(taskId: string) { initSmLocal(); const t = getTask(taskId); if (!t) return; t.dMode = true; t.listBadge = 'D'; t.listCountdownEndAt = null; set(`sm:task:${taskId}`, t) }
 export function onDClick(taskId: string) { initSmLocal(); const t = getTask(taskId); if (!t) return; t.dMode = false; set(`sm:task:${taskId}`, t); advancePastCurrentNode(taskId) }
 
