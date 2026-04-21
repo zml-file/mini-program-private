@@ -26,7 +26,7 @@
           @itemClick="handleItemClick"></bc-img-text-item>
       </block>
     <template #footer>
-      <view class="mf-footer">
+      <view v-if="!hasImageTextAccess" class="mf-footer">
         <view class="mf-btn" @click="handleClick">
           <image class="mf-bg" src="@/static/images/xianxia.png" mode="widthFix" />
           <view class="mf-text">
@@ -101,6 +101,8 @@ const persistImageTextState = () => {
 };
 
 // 排序后的列表：普通图文在前，特殊图文在后
+const hasImageTextAccess = computed(() => data.list.length > 0 || !!data.describe);
+
 const sortedList = computed(() => {
   return [...data.list].sort((a, b) => {
     // dataType === 1 表示特殊图文，其他为普通图文

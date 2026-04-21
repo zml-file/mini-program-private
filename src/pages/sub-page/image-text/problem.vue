@@ -74,6 +74,15 @@ const handleBack = () => {
 /**
  * 弹窗相关处理
  */
+const navigateBackToA0 = () => {
+  const pages = getCurrentPages();
+  if (pages.length > 1) {
+    uni.navigateBack({ delta: 1 });
+    return;
+  }
+  uni.switchTab({ url: '/pages/image-text/index' });
+};
+
 // 弹窗确认回调
 const handleOk = () => {
   if (popupInfo.value?.type === 'submit') {
@@ -83,10 +92,7 @@ const handleOk = () => {
       moduleUserQuestionList: data.submitList,
     });
   } else if (popupInfo.value?.type === 'back') {
-    // 返回
-    uni.redirectTo({
-      url: '/pages/sub-page/image-text/index',
-    });
+    navigateBackToA0();
   }
   popup.value!.close();
 };
@@ -134,11 +140,10 @@ const getQuestionList = async () => {
 const submitQuestion = async (params: Task.SubmitQuestion.Body) => {
   try {
     await api.task.submitQuestion(params);
-    // 跳转无答案页面（使用redirectTo替换当前页面，避免返回到问卷页）
-    // taskName 就是模块名��（如"A0模块"），将其作为 moduleName 传递
-    uni.redirectTo({
-      url: `/pages/sub-page/image-text/analysis?taskId=${data.prevPageQuery.taskId}&taskName=${encodeURIComponent(data.prevPageQuery?.taskName || '')}&moduleName=${encodeURIComponent(data.prevPageQuery?.taskName || '图文模块')}`,
-    });
+    uni.showToast({ title: '提交成功', icon: 'success' });
+    setTimeout(() => {
+      navigateBackToA0();
+    }, 300);
   } catch (error) {}
 };
 
@@ -152,7 +157,7 @@ onLoad(option => {
 
 onShow(() => {
   console.log('onShow');
-  uni.setStorageSync('backRoute', '/pages/sub-page/image-text/index');
+  uni.setStorageSync('backRoute', '/pages/image-text/index');
 });
 </script>
 
